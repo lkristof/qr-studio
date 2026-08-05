@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#111827">
   <meta name="description" content="Modern, mobilbarát QR-kód generátor és olvasó.">
   <title>QR Studio – Generátor és olvasó</title>
+
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImJnIiB4MT0iOCIgeTE9IjgiIHgyPSI1NiIgeTI9IjU2IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CiAgICAgIDxzdG9wIHN0b3AtY29sb3I9IiM2MzY2ZjEiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjNDMzOGNhIi8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxOCIgZmlsbD0idXJsKCNiZykiLz4KICA8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMiAxMikgc2NhbGUoMS42NjY2NjY3KSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIiPgogICAgPHJlY3QgeD0iMyIgeT0iMyIgd2lkdGg9IjYiIGhlaWdodD0iNiIvPgogICAgPHJlY3QgeD0iMTUiIHk9IjMiIHdpZHRoPSI2IiBoZWlnaHQ9IjYiLz4KICAgIDxyZWN0IHg9IjMiIHk9IjE1IiB3aWR0aD0iNiIgaGVpZ2h0PSI2Ii8+CiAgICA8cmVjdCB4PSIxNCIgeT0iMTQiIHdpZHRoPSI4IiBoZWlnaHQ9IjgiIGZpbGw9IiNmZmYiIHN0cm9rZT0ibm9uZSIvPgogIDwvZz4KPC9zdmc+Cg==">
 
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" defer></script>
@@ -220,6 +221,7 @@
 
     .workspace {
       display: grid;
+      width: 100%;
       grid-template-columns: minmax(0, 1.08fr) minmax(320px, .92fr);
       gap: 20px;
       align-items: start;
@@ -437,7 +439,8 @@
 
     .scanner-layout {
       display: grid;
-      grid-template-columns: minmax(0, 1.1fr) minmax(300px, .9fr);
+      width: 100%;
+      grid-template-columns: minmax(0, 1.08fr) minmax(320px, .92fr);
       gap: 20px;
       align-items: start;
     }
@@ -470,6 +473,59 @@
     }
 
     .scanner-placeholder.hidden { display: none; }
+
+    .scanner-success {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      display: grid;
+      place-items: center;
+      padding: 28px;
+      color: var(--scanner-text);
+      text-align: center;
+      background: color-mix(in srgb, var(--scanner-bg) 88%, transparent);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity .2s ease, visibility .2s ease;
+    }
+
+    .scanner-success.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .scanner-success-mark {
+      display: grid;
+      place-items: center;
+      width: 82px;
+      height: 82px;
+      margin: 0 auto 16px;
+      border-radius: 50%;
+      color: #fff;
+      background: var(--success);
+      box-shadow: 0 14px 34px color-mix(in srgb, var(--success) 34%, transparent);
+      transform: scale(.82);
+    }
+
+    .scanner-success.show .scanner-success-mark {
+      animation: success-pop .38s cubic-bezier(.2, .9, .3, 1.25) forwards;
+    }
+
+    .scanner-success-mark svg { width: 44px; height: 44px; }
+    .scanner-success strong { display: block; margin-bottom: 6px; font-size: 1.05rem; }
+    .scanner-success p { margin: 0; color: var(--scanner-muted); font-size: .86rem; }
+
+    @keyframes success-pop {
+      to { transform: scale(1); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .scanner-success, .scanner-success-mark { transition: none; animation: none !important; }
+      .scanner-success-mark { transform: scale(1); }
+    }
 
     .scan-frame {
       --scan-frame-radius: 26px;
@@ -528,7 +584,10 @@
     .upload-label { cursor: pointer; }
     .upload-label input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 
-    .result-card { min-height: 100%; }
+    .result-card {
+      min-height: 100%;
+      scroll-margin-top: 18px;
+    }
 
     .result-output {
       min-height: 134px;
@@ -780,6 +839,15 @@
                   <p>Engedélyezd a kamerát, majd tartsd a QR-kódot a kereten belül.</p>
                 </div>
               </div>
+              <div class="scanner-success" id="scanner-success" role="status" aria-live="assertive" aria-hidden="true">
+                <div>
+                  <div class="scanner-success-mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"></path></svg>
+                  </div>
+                  <strong>Sikeres beolvasás</strong>
+                  <p>A kamera leállt. Megjelenítjük a beolvasott tartalmat.</p>
+                </div>
+              </div>
             </div>
 
             <div class="scanner-controls">
@@ -800,7 +868,7 @@
           </div>
         </article>
 
-        <aside class="card result-card">
+        <aside class="card result-card" id="scan-result-card">
           <div class="card-body">
             <div class="section-heading">
               <div>
@@ -809,7 +877,7 @@
               </div>
             </div>
 
-            <div class="result-output empty" id="scan-result" aria-live="polite">Még nincs beolvasott QR-kód.</div>
+            <div class="result-output empty" id="scan-result" tabindex="-1" aria-live="polite">Még nincs beolvasott QR-kód.</div>
             <div class="result-meta" id="result-meta" hidden>
               <span class="meta-chip" id="result-type">Típus: szöveg</span>
               <span class="meta-chip" id="result-time">Beolvasva: –</span>
@@ -866,6 +934,8 @@
 
       const readerId = 'reader';
       const scannerPlaceholder = $('#scanner-placeholder');
+      const scannerSuccess = $('#scanner-success');
+      const scanResultCard = $('#scan-result-card');
       const startCameraButton = $('#start-camera');
       const stopCameraButton = $('#stop-camera');
       const qrFileInput = $('#qr-file');
@@ -880,6 +950,8 @@
 
       let html5QrCode = null;
       let scannerRunning = false;
+      let scanCompleting = false;
+      let successOverlayTimer = 0;
       let lastScanValue = '';
       let lastScanAt = 0;
 
@@ -898,6 +970,25 @@
       function hideStatus(element) {
         element.textContent = '';
         element.className = 'status';
+      }
+
+      function hideScannerSuccess() {
+        window.clearTimeout(successOverlayTimer);
+        scannerSuccess.classList.remove('show');
+        scannerSuccess.setAttribute('aria-hidden', 'true');
+      }
+
+      function showScannerSuccess() {
+        window.clearTimeout(successOverlayTimer);
+        scannerSuccess.classList.add('show');
+        scannerSuccess.setAttribute('aria-hidden', 'false');
+        successOverlayTimer = window.setTimeout(hideScannerSuccess, 1500);
+      }
+
+      function moveToScanResult() {
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        scanResultCard.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+        window.setTimeout(() => scanResult.focus({ preventScroll: true }), reduceMotion ? 0 : 420);
       }
 
       async function stopScannerSilently() {
@@ -1070,9 +1161,10 @@
         return { label: 'szöveg', openable: false };
       }
 
-      function handleScanSuccess(decodedText) {
+      async function handleScanSuccess(decodedText) {
         const now = Date.now();
-        if (decodedText === lastScanValue && now - lastScanAt < 1800) return;
+        if (scanCompleting || (decodedText === lastScanValue && now - lastScanAt < 1800)) return;
+        scanCompleting = true;
         lastScanValue = decodedText;
         lastScanAt = now;
 
@@ -1084,9 +1176,18 @@
         resultTime.textContent = `Beolvasva: ${new Intl.DateTimeFormat('hu-HU', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date())}`;
         copyResultButton.disabled = false;
         openResultButton.disabled = !classification.openable;
-        showStatus(scannerStatus, 'A QR-kód beolvasása sikerült.', 'success');
+        showStatus(scannerStatus, 'A QR-kód beolvasása sikerült. A kamera automatikusan leállt.', 'success');
+        showScannerSuccess();
 
-        if (navigator.vibrate) navigator.vibrate(80);
+        if (navigator.vibrate) navigator.vibrate([60, 35, 90]);
+
+        await stopScannerSilently();
+        await new Promise((resolve) => window.setTimeout(resolve, 650));
+        moveToScanResult();
+
+        window.setTimeout(() => {
+          scanCompleting = false;
+        }, 1600);
       }
 
       function handleScanFailure() {
@@ -1095,6 +1196,8 @@
 
       startCameraButton.addEventListener('click', async () => {
         hideStatus(scannerStatus);
+        hideScannerSuccess();
+        scanCompleting = false;
 
         if (!window.isSecureContext && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
           showStatus(scannerStatus, 'A kamera csak HTTPS-kapcsolaton vagy localhost alatt használható. Képfájlból továbbra is beolvashatsz QR-kódot.', 'error');
@@ -1148,6 +1251,8 @@
         if (!file) return;
 
         hideStatus(scannerStatus);
+        hideScannerSuccess();
+        scanCompleting = false;
         await stopScannerSilently();
 
         if (typeof Html5Qrcode === 'undefined') {
@@ -1170,6 +1275,8 @@
       });
 
       clearResultButton.addEventListener('click', () => {
+        hideScannerSuccess();
+        scanCompleting = false;
         lastScanValue = '';
         lastScanAt = 0;
         scanResult.textContent = 'Még nincs beolvasott QR-kód.';
