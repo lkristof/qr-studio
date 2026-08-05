@@ -490,6 +490,29 @@
     .btn:active { transform: scale(.985); }
     .btn:disabled { opacity: .48; cursor: not-allowed; }
     .btn svg { width: 19px; height: 19px; }
+
+    .brand-mark {
+      transform-origin: center;
+      will-change: transform;
+    }
+
+    @keyframes logo-pulse {
+      0%, 100% { transform: scale(1); }
+      34% { transform: scale(1.10); }
+      58% { transform: scale(1.035); }
+      78% { transform: scale(1.075); }
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      .brand-mark:hover {
+        animation: logo-pulse .58s ease-out;
+      }
+    }
+
+    .logo-tap-animate {
+      animation: logo-pulse .58s ease-out;
+    }
+
     .btn-primary { color: white; background: var(--primary-strong); }
     .btn-primary:hover { background: var(--primary); }
     .btn-secondary { color: var(--text); border-color: var(--border); background: var(--surface-solid); }
@@ -640,6 +663,8 @@
     @media (prefers-reduced-motion: reduce) {
       .scanner-success, .scanner-success-mark { transition: none; animation: none !important; }
       .scanner-success-mark { transform: scale(1); }
+      .brand-mark,
+      .logo-tap-animate { animation: none !important; transform: none !important; }
     }
 
     .scan-frame {
@@ -1455,6 +1480,23 @@
       generatorTab.addEventListener('click', () => selectTab('generator'));
       scannerTab.addEventListener('click', () => selectTab('scanner'));
       languageSelect.addEventListener('change', () => setLanguageMode(languageSelect.value));
+
+      const brandMark = $('.brand-mark');
+
+      brandMark.addEventListener('pointerdown', (event) => {
+        if (event.pointerType === 'mouse') return;
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+        brandMark.classList.remove('logo-tap-animate');
+        void brandMark.getBoundingClientRect();
+        brandMark.classList.add('logo-tap-animate');
+      }, { passive: true });
+
+      brandMark.addEventListener('animationend', (event) => {
+        if (event.animationName === 'logo-pulse') {
+          brandMark.classList.remove('logo-tap-animate');
+        }
+      });
 
       qrText.addEventListener('input', () => {
         charCount.textContent = String(qrText.value.length);
