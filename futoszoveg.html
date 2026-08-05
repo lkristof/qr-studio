@@ -1,0 +1,758 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <title>Futószöveg</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --page-bg: #101114;
+      --panel-bg: #181a1f;
+      --border: #30333b;
+      --muted: #aeb3bf;
+      --accent: #72e5a3;
+      --accent-text: #07130c;
+      --ticker-bg: #000000;
+      --ticker-color: #ffffff;
+      --ticker-size: 96px;
+      --ticker-line-height: 0.9;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--page-bg);
+      color: #ffffff;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button,
+    textarea,
+    input {
+      font: inherit;
+    }
+
+    button {
+      touch-action: manipulation;
+    }
+
+    .editor {
+      width: min(820px, 100%);
+      margin: 0 auto;
+      padding: 24px 16px 36px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      margin-bottom: 8px;
+    }
+
+    .brand-icon {
+      display: grid;
+      width: 52px;
+      height: 52px;
+      flex: 0 0 52px;
+      place-items: center;
+      border: 1px solid #3c414b;
+      border-radius: 16px;
+      background: #181a1f;
+      box-shadow: 0 10px 26px rgb(0 0 0 / 22%);
+    }
+
+    .brand-icon svg {
+      width: 44px;
+      height: 44px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.65rem, 5vw, 2.5rem);
+      line-height: 1.05;
+    }
+
+    .intro {
+      margin: 0 0 22px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .panel {
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: var(--panel-bg);
+      box-shadow: 0 18px 50px rgb(0 0 0 / 22%);
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 150px;
+      resize: vertical;
+      padding: 14px;
+      border: 1px solid #444955;
+      border-radius: 12px;
+      outline: none;
+      background: #0d0e11;
+      color: #ffffff;
+      line-height: 1.45;
+    }
+
+    textarea:focus,
+    input:focus-visible,
+    button:focus-visible {
+      outline: 3px solid rgb(114 229 163 / 45%);
+      outline-offset: 2px;
+    }
+
+    .settings {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .setting {
+      min-width: 0;
+    }
+
+    .setting.full {
+      grid-column: 1 / -1;
+    }
+
+    .range-line {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    output {
+      min-width: 72px;
+      color: var(--muted);
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .colors {
+      display: flex;
+      gap: 12px;
+    }
+
+    .color-item {
+      flex: 1;
+    }
+
+    input[type="color"] {
+      width: 100%;
+      height: 48px;
+      padding: 4px;
+      overflow: hidden;
+      border: 1px solid #444955;
+      border-radius: 14px;
+      background: #0d0e11;
+      cursor: pointer;
+    }
+
+    input[type="color"]::-webkit-color-swatch-wrapper {
+      padding: 0;
+    }
+
+    input[type="color"]::-webkit-color-swatch {
+      border: 0;
+      border-radius: 10px;
+    }
+
+    input[type="color"]::-moz-color-swatch {
+      border: 0;
+      border-radius: 10px;
+    }
+
+    .checkbox {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 46px;
+      padding: 0 2px;
+    }
+
+    .checkbox input {
+      width: 22px;
+      height: 22px;
+      accent-color: var(--accent);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .button {
+      min-height: 48px;
+      padding: 12px 17px;
+      border: 0;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    .button.primary {
+      background: var(--accent);
+      color: var(--accent-text);
+    }
+
+    .button.secondary {
+      border: 1px solid #474b56;
+      background: #272a31;
+      color: #ffffff;
+    }
+
+    .display {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: none;
+      overflow: hidden;
+      background: var(--ticker-bg);
+      color: var(--ticker-color);
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .display.active {
+      display: block;
+    }
+
+    .ticker-viewport {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    .ticker {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      width: max-content;
+      max-width: none;
+      white-space: pre;
+      transform: translate3d(0, -50%, 0);
+      color: var(--ticker-color);
+      font-size: var(--ticker-size);
+      font-weight: 800;
+      line-height: var(--ticker-line-height);
+      letter-spacing: 0.01em;
+      will-change: transform;
+    }
+
+    .ticker.normal-weight {
+      font-weight: 500;
+    }
+
+    .display-controls {
+      position: absolute;
+      right: max(12px, env(safe-area-inset-right));
+      bottom: max(12px, env(safe-area-inset-bottom));
+      left: max(12px, env(safe-area-inset-left));
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 180ms ease, transform 180ms ease;
+      pointer-events: none;
+    }
+
+    .display.controls-visible .display-controls {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .display-controls .button {
+      min-height: 44px;
+      padding: 10px 14px;
+      border: 1px solid rgb(255 255 255 / 25%);
+      background: rgb(20 20 20 / 76%);
+      color: #ffffff;
+      backdrop-filter: blur(8px);
+    }
+
+    .empty-warning {
+      display: none;
+      margin-top: 12px;
+      color: #ffb4b4;
+      font-weight: 700;
+    }
+
+    @media (max-width: 620px) {
+      .settings {
+        grid-template-columns: 1fr;
+      }
+
+      .setting.full {
+        grid-column: auto;
+      }
+
+      .actions .button {
+        flex: 1 1 160px;
+      }
+
+      .display-controls {
+        flex-wrap: wrap;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="editor" id="editor">
+    <div class="brand">
+      <div class="brand-icon" aria-hidden="true">
+        <svg viewBox="0 0 48 48" role="img">
+          <rect x="5" y="7" width="38" height="34" rx="9" fill="none" stroke="currentColor" stroke-width="2.5" opacity="0.9"/>
+          <path d="M31.5 17.5H17.5M27 24H13M31.5 30.5H17.5" fill="none" stroke="#72e5a3" stroke-width="3.2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h1>Futószöveg</h1>
+    </div>
+    <p class="intro">
+      Írd be az üzenetet, fordítsd fekvő helyzetbe a telefont, majd indítsd el. A betűk automatikusan közel teljesen kitöltik a képernyő magasságát.
+    </p>
+
+    <section class="panel" aria-labelledby="message-label">
+      <label id="message-label" for="message">Megjelenítendő szöveg</label>
+      <textarea id="message" placeholder="Például: A következő megállónál leszállok."></textarea>
+
+      <div class="settings">
+        <div class="setting full">
+          <label class="checkbox" for="autoFit">
+            <input id="autoFit" type="checkbox" checked>
+            Automatikus méretezés
+          </label>
+        </div>
+
+        <div class="setting full" id="fontSizeSetting">
+          <label for="fontSize">Kézi betűméret</label>
+          <div class="range-line">
+            <input id="fontSize" type="range" min="36" max="360" step="2" value="120">
+            <output id="fontSizeValue" for="fontSize">120 px</output>
+          </div>
+        </div>
+
+        <div class="setting full">
+          <label for="speed">Sebesség</label>
+          <div class="range-line">
+            <input id="speed" type="range" min="250" max="750" step="10" value="500">
+            <output id="speedValue" for="speed">500 px/s</output>
+          </div>
+        </div>
+
+        <div class="setting">
+          <label for="textColor">Szövegszín</label>
+          <input id="textColor" type="color" value="#ffffff">
+        </div>
+
+        <div class="setting">
+          <label for="backgroundColor">Háttérszín</label>
+          <input id="backgroundColor" type="color" value="#000000">
+        </div>
+
+        <div class="setting">
+          <label class="checkbox" for="bold">
+            <input id="bold" type="checkbox" checked>
+            Félkövér szöveg
+          </label>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="button primary" id="startButton" type="button">Futószöveg indítása</button>
+        <button class="button secondary" id="previewButton" type="button">Előnézet</button>
+      </div>
+
+      <div class="empty-warning" id="emptyWarning" role="alert">
+        Előbb írj be egy üzenetet.
+      </div>
+
+    </section>
+  </main>
+
+  <section class="display" id="display" aria-label="Futószöveg megjelenítő">
+    <div class="ticker-viewport" id="viewport">
+      <div class="ticker" id="ticker"></div>
+    </div>
+
+    <div class="display-controls">
+      <button class="button" id="pauseButton" type="button">Szünet</button>
+      <button class="button" id="fullscreenButton" type="button">Teljes képernyő</button>
+      <button class="button" id="backButton" type="button">Vissza</button>
+    </div>
+  </section>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const elements = {
+        message: document.getElementById("message"),
+        autoFit: document.getElementById("autoFit"),
+        fontSize: document.getElementById("fontSize"),
+        fontSizeValue: document.getElementById("fontSizeValue"),
+        fontSizeSetting: document.getElementById("fontSizeSetting"),
+        speed: document.getElementById("speed"),
+        speedValue: document.getElementById("speedValue"),
+        textColor: document.getElementById("textColor"),
+        backgroundColor: document.getElementById("backgroundColor"),
+        bold: document.getElementById("bold"),
+        startButton: document.getElementById("startButton"),
+        previewButton: document.getElementById("previewButton"),
+        emptyWarning: document.getElementById("emptyWarning"),
+        display: document.getElementById("display"),
+        viewport: document.getElementById("viewport"),
+        ticker: document.getElementById("ticker"),
+        pauseButton: document.getElementById("pauseButton"),
+        fullscreenButton: document.getElementById("fullscreenButton"),
+        backButton: document.getElementById("backButton")
+      };
+
+      const storageKey = "telefonos-futoszoveg-beallitasok-v1";
+      let animationFrame = 0;
+      let lastTimestamp = 0;
+      let position = 0;
+      let paused = false;
+      let controlsTimer = 0;
+      let wakeLock = null;
+
+      function saveSettings() {
+        const data = {
+          message: elements.message.value,
+          autoFit: elements.autoFit.checked,
+          fontSize: elements.fontSize.value,
+          speed: elements.speed.value,
+          textColor: elements.textColor.value,
+          backgroundColor: elements.backgroundColor.value,
+          bold: elements.bold.checked
+        };
+
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(data));
+        } catch (_) {
+          // A lap ettől még működik, ha a böngésző tiltja a helyi tárolást.
+        }
+      }
+
+      function loadSettings() {
+        try {
+          const data = JSON.parse(localStorage.getItem(storageKey) || "null");
+          if (!data) return;
+
+          if (typeof data.message === "string") elements.message.value = data.message;
+          elements.autoFit.checked = data.autoFit !== false;
+          if (data.fontSize) elements.fontSize.value = data.fontSize;
+          if (data.speed) elements.speed.value = Math.max(250, Math.min(750, Number(data.speed) || 500));
+          if (data.textColor) elements.textColor.value = data.textColor;
+          if (data.backgroundColor) elements.backgroundColor.value = data.backgroundColor;
+          elements.bold.checked = data.bold !== false;
+        } catch (_) {
+          // Hibás vagy nem elérhető helyi adat esetén alapbeállítások maradnak.
+        }
+      }
+
+      function updateLabels() {
+        elements.fontSizeValue.value = `${elements.fontSize.value} px`;
+        elements.speedValue.value = `${elements.speed.value} px/s`;
+        elements.fontSize.disabled = elements.autoFit.checked;
+        elements.fontSizeSetting.style.opacity = elements.autoFit.checked ? "0.48" : "1";
+      }
+
+      function fitTextToViewportHeight() {
+        if (!elements.autoFit.checked || !elements.display.classList.contains("active")) return;
+
+        const viewportHeight = Math.max(elements.viewport.clientHeight, window.innerHeight);
+        const targetGlyphHeight = viewportHeight * 0.88;
+        const sampleSize = 100;
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
+        const weight = elements.bold.checked ? 800 : 500;
+        let calculatedSize = viewportHeight;
+
+        if (context) {
+          context.font = `${weight} ${sampleSize}px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+          const metrics = context.measureText(elements.ticker.textContent || "Ágj");
+          const measuredGlyphHeight =
+            (metrics.actualBoundingBoxAscent || sampleSize * 0.72) +
+            (metrics.actualBoundingBoxDescent || sampleSize * 0.2);
+
+          if (measuredGlyphHeight > 0) {
+            calculatedSize = targetGlyphHeight * sampleSize / measuredGlyphHeight;
+          }
+        }
+
+        calculatedSize = Math.max(48, Math.min(calculatedSize, viewportHeight * 1.35, 700));
+        document.documentElement.style.setProperty("--ticker-size", `${calculatedSize}px`);
+      }
+
+      function applyAppearance() {
+        document.documentElement.style.setProperty("--ticker-bg", elements.backgroundColor.value);
+        document.documentElement.style.setProperty("--ticker-color", elements.textColor.value);
+        document.documentElement.style.setProperty("--ticker-size", `${elements.fontSize.value}px`);
+        elements.ticker.classList.toggle("normal-weight", !elements.bold.checked);
+        fitTextToViewportHeight();
+      }
+
+      function getGap() {
+        return Math.max(window.innerWidth * 0.28, 80);
+      }
+
+      function resetPosition() {
+        const tickerWidth = elements.ticker.getBoundingClientRect().width;
+        const viewportWidth = elements.viewport.clientWidth;
+        position = viewportWidth + getGap();
+        elements.ticker.style.transform = `translate3d(${position}px, -50%, 0)`;
+      }
+
+      function animate(timestamp) {
+        if (!lastTimestamp) lastTimestamp = timestamp;
+        const elapsedSeconds = Math.min((timestamp - lastTimestamp) / 1000, 0.05);
+        lastTimestamp = timestamp;
+
+        if (!paused) {
+          const distance = Number(elements.speed.value) * elapsedSeconds;
+          position -= distance;
+
+          const tickerWidth = elements.ticker.getBoundingClientRect().width;
+          const viewportWidth = elements.viewport.clientWidth;
+          const gap = getGap();
+
+          if (position < -tickerWidth - gap) {
+            position = viewportWidth + gap;
+          }
+
+          elements.ticker.style.transform = `translate3d(${position}px, -50%, 0)`;
+        }
+
+        animationFrame = requestAnimationFrame(animate);
+      }
+
+      async function requestWakeLock() {
+        if (!("wakeLock" in navigator)) return;
+
+        try {
+          wakeLock = await navigator.wakeLock.request("screen");
+        } catch (_) {
+          wakeLock = null;
+        }
+      }
+
+      async function releaseWakeLock() {
+        if (!wakeLock) return;
+
+        try {
+          await wakeLock.release();
+        } catch (_) {
+          // Nincs további teendő.
+        }
+        wakeLock = null;
+      }
+
+      function showControls() {
+        elements.display.classList.add("controls-visible");
+        clearTimeout(controlsTimer);
+        controlsTimer = window.setTimeout(() => {
+          elements.display.classList.remove("controls-visible");
+        }, 3000);
+      }
+
+      function startDisplay(tryFullscreen) {
+        const message = elements.message.value.trim();
+
+        if (!message) {
+          elements.emptyWarning.style.display = "block";
+          elements.message.focus();
+          return;
+        }
+
+        elements.emptyWarning.style.display = "none";
+        saveSettings();
+        applyAppearance();
+
+        elements.ticker.textContent = message.replace(/\r?\n/g, "   •   ");
+        elements.display.classList.add("active");
+        elements.display.setAttribute("aria-hidden", "false");
+        paused = false;
+        elements.pauseButton.textContent = "Szünet";
+
+        cancelAnimationFrame(animationFrame);
+        lastTimestamp = 0;
+
+        requestAnimationFrame(() => {
+          fitTextToViewportHeight();
+          resetPosition();
+          animationFrame = requestAnimationFrame(animate);
+        });
+
+        requestWakeLock();
+        showControls();
+
+        if (tryFullscreen) {
+          enterFullscreen();
+        }
+      }
+
+      async function enterFullscreen() {
+        const target = document.documentElement;
+
+        if (!document.fullscreenElement && target.requestFullscreen) {
+          try {
+            await target.requestFullscreen();
+          } catch (_) {
+            // Egyes mobilböngészők nem engedélyezik a teljes képernyőt.
+          }
+        }
+
+        if (screen.orientation && screen.orientation.lock) {
+          try {
+            await screen.orientation.lock("landscape");
+          } catch (_) {
+            // iPhone-on és néhány böngészőben a tájolás nem zárható programból.
+          }
+        }
+
+        requestAnimationFrame(() => {
+          fitTextToViewportHeight();
+          resetPosition();
+        });
+      }
+
+      async function exitDisplay() {
+        cancelAnimationFrame(animationFrame);
+        animationFrame = 0;
+        elements.display.classList.remove("active", "controls-visible");
+        elements.display.setAttribute("aria-hidden", "true");
+        await releaseWakeLock();
+
+        if (document.fullscreenElement && document.exitFullscreen) {
+          try {
+            await document.exitFullscreen();
+          } catch (_) {
+            // A megjelenítő ettől függetlenül bezárul.
+          }
+        }
+      }
+
+      function togglePause() {
+        paused = !paused;
+        elements.pauseButton.textContent = paused ? "Folytatás" : "Szünet";
+        lastTimestamp = 0;
+        showControls();
+      }
+
+      elements.autoFit.addEventListener("change", () => {
+        updateLabels();
+        applyAppearance();
+        resetPosition();
+        saveSettings();
+      });
+
+      elements.fontSize.addEventListener("input", () => {
+        updateLabels();
+        applyAppearance();
+        resetPosition();
+        saveSettings();
+      });
+
+      elements.speed.addEventListener("input", () => {
+        updateLabels();
+        saveSettings();
+      });
+
+      [
+        elements.message,
+        elements.autoFit,
+        elements.textColor,
+        elements.backgroundColor,
+        elements.bold
+      ].forEach((element) => {
+        element.addEventListener("input", saveSettings);
+        element.addEventListener("change", saveSettings);
+      });
+
+      elements.startButton.addEventListener("click", () => startDisplay(true));
+      elements.previewButton.addEventListener("click", () => startDisplay(false));
+      elements.pauseButton.addEventListener("click", (event) => {
+        event.stopPropagation();
+        togglePause();
+      });
+
+      elements.fullscreenButton.addEventListener("click", (event) => {
+        event.stopPropagation();
+        enterFullscreen();
+        showControls();
+      });
+
+      elements.backButton.addEventListener("click", (event) => {
+        event.stopPropagation();
+        exitDisplay();
+      });
+
+      elements.display.addEventListener("click", showControls);
+
+      window.addEventListener("resize", () => {
+        if (elements.display.classList.contains("active")) {
+          fitTextToViewportHeight();
+          resetPosition();
+        }
+      });
+
+      window.addEventListener("orientationchange", () => {
+        window.setTimeout(() => {
+          fitTextToViewportHeight();
+          resetPosition();
+        }, 180);
+      });
+
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible" && elements.display.classList.contains("active")) {
+          requestWakeLock();
+          lastTimestamp = 0;
+        }
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (!elements.display.classList.contains("active")) return;
+
+        if (event.key === "Escape") {
+          exitDisplay();
+        } else if (event.key === " " || event.key === "Enter") {
+          event.preventDefault();
+          togglePause();
+        }
+      });
+
+      loadSettings();
+      updateLabels();
+      elements.display.setAttribute("aria-hidden", "true");
+    })();
+  </script>
+</body>
+</html>
