@@ -1,6 +1,9 @@
 {
   "name": "QR-Studio",
   "short_name": "QR-Studio",
+  "id": "/qr-studio/",
+  "start_url": "/qr-studio/",
+  "scope": "/qr-studio/",
   "icons": [
     {
       "src": "/qr-studio/assets/images/web-app-manifest-192x192.png",
