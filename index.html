@@ -142,11 +142,13 @@
     .brand-copy strong { display: block; font-size: 1rem; line-height: 1.2; }
     .brand-copy span { display: block; margin-top: 3px; color: var(--muted); font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-    .privacy-chip {
+    .privacy-chip,
+    .language-chip {
       display: inline-flex;
       align-items: center;
       gap: 7px;
       flex: 0 0 auto;
+      min-height: 36px;
       padding: 9px 12px;
       border: 1px solid var(--border);
       border-radius: 999px;
@@ -154,9 +156,84 @@
       background: var(--surface);
       backdrop-filter: blur(16px);
       font-size: 0.78rem;
+      line-height: 1;
     }
 
     .privacy-chip svg { width: 15px; height: 15px; color: var(--success); }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 0 0 auto;
+    }
+
+    .language-chip {
+      position: relative;
+      cursor: pointer;
+      transition: border-color .16s ease, background .16s ease;
+    }
+
+    .language-chip:hover {
+      border-color: color-mix(in srgb, var(--primary) 42%, var(--border));
+      background: color-mix(in srgb, var(--surface-solid) 92%, transparent);
+    }
+
+    .language-chip > svg {
+      width: 15px;
+      height: 15px;
+      flex: 0 0 15px;
+      color: var(--primary);
+      pointer-events: none;
+    }
+
+    .language-current {
+      min-width: 22px;
+      color: var(--text);
+      font-size: inherit;
+      font-weight: 800;
+      line-height: 1;
+      text-align: center;
+    }
+
+    .language-select {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      border-radius: inherit;
+      opacity: 0;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    .language-chevron {
+      width: 13px !important;
+      height: 13px !important;
+      flex-basis: 13px !important;
+      color: var(--muted) !important;
+    }
+
+    .language-chip:focus-within {
+      outline: 3px solid rgba(99, 102, 241, 0.38);
+      outline-offset: 2px;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
 
     .hero {
       max-width: 760px;
@@ -716,6 +793,8 @@
       .topbar { align-items: flex-start; }
       .privacy-chip span { display: none; }
       .privacy-chip { width: 40px; height: 40px; justify-content: center; padding: 0; }
+      .topbar-actions { gap: 6px; }
+      .language-chip { padding-inline: 10px; }
       .hero { margin-top: 8px; }
       .options-grid { grid-template-columns: 1fr; }
       .actions { grid-template-columns: 1fr; }
@@ -746,12 +825,32 @@
         </div>
       </div>
 
-      <div class="privacy-chip" title="A feldolgozás a böngészőben történik">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-          <path d="m9 12 2 2 4-4"></path>
-        </svg>
-        <span>Helyi feldolgozás</span>
+      <div class="topbar-actions">
+        <div class="language-chip" title="Nyelv kiválasztása">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="9"></circle>
+            <path d="M3 12h18"></path>
+            <path d="M12 3a15 15 0 0 1 0 18"></path>
+            <path d="M12 3a15 15 0 0 0 0 18"></path>
+          </svg>
+          <span class="language-current" id="language-current" aria-hidden="true">HU</span>
+          <svg class="language-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true">
+            <path d="m7 9 5 5 5-5"></path>
+          </svg>
+          <label class="sr-only" for="language-select">Nyelv</label>
+          <select class="language-select" id="language-select" aria-label="Nyelv">
+            <option value="hu">HU</option>
+            <option value="en">EN</option>
+          </select>
+        </div>
+
+        <div class="privacy-chip" title="A feldolgozás a böngészőben történik">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            <path d="m9 12 2 2 4-4"></path>
+          </svg>
+          <span>Helyi feldolgozás</span>
+        </div>
       </div>
     </header>
 
@@ -979,6 +1078,7 @@
       const lightColorValue = $('#light-color-value');
       const qrCodeContainer = $('#qrcode');
       const qrEmpty = $('#qr-empty');
+      const qrStage = $('#qr-stage');
       const generateButton = $('#generate-button');
       const clearButton = $('#clear-button');
       const resetStyle = $('#reset-style');
@@ -997,6 +1097,8 @@
       const scannerStatus = $('#scanner-status');
       const scanHistory = $('#scan-history');
       const scanHistoryEmpty = $('#scan-history-empty');
+      const languageSelect = $('#language-select');
+      const languageCurrent = $('#language-current');
 
       let html5QrCode = null;
       let scannerRunning = false;
@@ -1009,6 +1111,247 @@
 
       const SCAN_HISTORY_STORAGE_KEY = 'qr-studio.scan-history.v1';
       const MAX_STORED_SCANS = 100;
+      const LANGUAGE_STORAGE_KEY = 'qr-studio.language.v1';
+
+      const englishTranslations = {
+        "QR Studio – Generátor és olvasó": "QR Studio – Generator and scanner",
+        "Generátor és beolvasó egy helyen": "Generator and scanner in one place",
+        "Helyi feldolgozás": "Local processing",
+        "Gyors · modern · mobilbarát": "Fast · modern · mobile-friendly",
+        "QR-kód néhány érintéssel.": "QR codes in a few taps.",
+        "Hozz létre letölthető QR-kódot szövegből vagy linkből, illetve olvasd be kamerával vagy egy képfájlból.": "Create a downloadable QR code from text or a link, or scan one with the camera or from an image file.",
+        "QR generálása": "Generate QR",
+        "QR beolvasása": "Scan QR",
+        "QR-kód tartalma": "QR code content",
+        "Adj meg linket, szöveget, telefonszámot vagy e-mail-címet.": "Enter a link, text, phone number, or email address.",
+        "Generátor": "Generator",
+        "Tartalom": "Content",
+        "karakter": "characters",
+        "Webcím": "Website",
+        "E-mail": "Email",
+        "Telefon": "Phone",
+        "Wi-Fi": "Wi-Fi",
+        "Méret": "Size",
+        "Hibatűrés": "Error correction",
+        "Alacsony": "Low",
+        "Közepes": "Medium",
+        "Magas": "High",
+        "Legmagasabb": "Highest",
+        "Fájlnév": "File name",
+        "Kód színe": "Code color",
+        "Háttér": "Background",
+        "Alaphelyzet": "Reset",
+        "QR-kód létrehozása": "Create QR code",
+        "Törlés": "Delete",
+        "Előnézet": "Preview",
+        "A kész kód PNG-képként letölthető.": "The generated code can be downloaded as a PNG image.",
+        "Itt jelenik meg a QR-kód": "Your QR code will appear here",
+        "Írd be a tartalmat, majd nyomd meg a létrehozás gombot.": "Enter the content, then press the create button.",
+        "PNG letöltése": "Download PNG",
+        "Másolás": "Copy",
+        "QR-kód beolvasása": "Scan QR code",
+        "Használd a kamerát, vagy válassz egy képet a készülékről.": "Use the camera or choose an image from your device.",
+        "Olvasó": "Scanner",
+        "A kamera még nincs elindítva": "The camera has not started yet",
+        "Engedélyezd a kamerát, majd tartsd a QR-kódot a kereten belül.": "Allow camera access, then hold the QR code inside the frame.",
+        "Sikeres beolvasás": "Scan successful",
+        "A kamera leállt. Megjelenítjük a beolvasott tartalmat.": "The camera has stopped. Showing the scanned content.",
+        "Kamera indítása": "Start camera",
+        "Kamera leállítása": "Stop camera",
+        "Kép kiválasztása": "Choose image",
+        "Összes törlése": "Delete all",
+        "Beolvasott tartalom": "Scanned content",
+        "A beolvasások ezen a böngészőn megmaradnak, amíg nem törlöd őket.": "Scans remain stored in this browser until you delete them.",
+        "Még nincs beolvasott QR-kód.": "No QR code has been scanned yet.",
+        "Ismeretlen QR-kódnál ellenőrizd a webcímet megnyitás előtt. A beolvasási előzmények csak ezen a készüléken, a böngésző helyi tárhelyén maradnak meg. Az oldal csak a": "For unknown QR codes, verify the address before opening it. Scan history is stored only on this device in the browser's local storage. The page only allows",
+        "és": "and",
+        "hivatkozásokat engedi megnyitni.": "links to be opened.",
+        "A generálás és a beolvasás a böngészőben történik. Kamerahasználathoz HTTPS-kapcsolat vagy localhost szükséges.": "Generation and scanning happen in the browser. Camera access requires HTTPS or localhost.",
+        "A feldolgozás a böngészőben történik": "Processing happens in the browser",
+        "Funkció választó": "Feature selector",
+        "Például: https://pelda.hu vagy egy rövid üzenet": "For example: https://example.com or a short message",
+        "Gyors minták": "Quick presets",
+        "Elkészült QR-kód": "Generated QR code",
+        "Kamerakép QR-kód beolvasásához": "Camera view for scanning a QR code",
+        "QR-kódot tartalmazó kép kiválasztása a galériából vagy a fájlok közül": "Choose an image containing a QR code from the gallery or files",
+        "Beolvasási előzmények": "Scan history",
+        "Nyelv": "Language",
+        "Nyelv kiválasztása": "Choose language",
+        "Automatikus": "Automatic",
+        "Magyar": "Hungarian",
+        "Adj meg egy linket vagy szöveget a QR-kód létrehozásához.": "Enter a link or text to create a QR code.",
+        "A QR-generáló modul nem töltődött be. Ellenőrizd az internetkapcsolatot, majd frissítsd az oldalt.": "The QR generator module could not be loaded. Check your internet connection and refresh the page.",
+        "A QR-kód elkészült.": "The QR code is ready.",
+        "A tartalom túl hosszú vagy nem alakítható QR-kóddá. Rövidítsd le, vagy válassz alacsonyabb hibatűrést.": "The content is too long or cannot be converted into a QR code. Shorten it or choose a lower error-correction level.",
+        "A PNG-fájl letöltése elindult.": "The PNG download has started.",
+        "A böngésző nem támogatja a kép közvetlen másolását. Használd a PNG letöltése gombot.": "This browser does not support copying the image directly. Use the Download PNG button.",
+        "A QR-kód képként a vágólapra került.": "The QR code image was copied to the clipboard.",
+        "A kép másolását a böngésző nem engedélyezte. Használd a letöltést.": "The browser did not allow the image to be copied. Use the download option.",
+        "webcím": "website",
+        "e-mail": "email",
+        "telefonszám": "phone number",
+        "Wi-Fi beállítás": "Wi-Fi configuration",
+        "szöveg": "text",
+        "Típus": "Type",
+        "Beolvasva": "Scanned",
+        "QR-kód": "QR code",
+        "QR-kód generálása ebből a tartalomból": "Generate a QR code from this content",
+        "Megnyitás": "Open",
+        "A másolás nem támogatott.": "Copying is not supported.",
+        "A QR-kód beolvasása sikerült. A kamera automatikusan leállt.": "The QR code was scanned successfully. The camera stopped automatically.",
+        "A kamera csak HTTPS-kapcsolaton vagy localhost alatt használható. Képfájlból továbbra is beolvashatsz QR-kódot.": "The camera can only be used over HTTPS or on localhost. You can still scan a QR code from an image file.",
+        "A QR-olvasó modul nem töltődött be. Ellenőrizd az internetkapcsolatot, majd frissítsd az oldalt.": "The QR scanner module could not be loaded. Check your internet connection and refresh the page.",
+        "Kamera indítása…": "Starting camera…",
+        "A kamera nem indítható. Ellenőrizd a kameraengedélyt, vagy válassz képet a készülékről.": "The camera could not be started. Check the camera permission or choose an image from your device.",
+        "A kamera leállt.": "The camera has stopped.",
+        "A kép elemzése…": "Analyzing image…",
+        "A kiválasztott képen nem található olvasható QR-kód.": "No readable QR code was found in the selected image.",
+        "A kiválasztott tartalom a vágólapra került.": "The selected content was copied to the clipboard.",
+        "A másolást a böngésző nem engedélyezte. Jelöld ki és másold ki kézzel a szöveget.": "The browser did not allow copying. Select the text and copy it manually.",
+        "A kiválasztott beolvasás törölve.": "The selected scan was deleted.",
+        "A kamera leállítása nem sikerült:": "The camera could not be stopped:",
+        "A beolvasási előzmények mentése nem sikerült:": "The scan history could not be saved:",
+        "A beolvasási előzmények betöltése nem sikerült:": "The scan history could not be loaded:",
+        "A beolvasási előzmények törlése nem sikerült:": "The scan history could not be deleted:",
+        "Modern, mobilbarát QR-kód generátor és olvasó.": "Modern, mobile-friendly QR code generator and scanner."
+};
+      const staticTextBindings = [];
+      const staticAttributeBindings = [];
+      let languageMode = resolveAutomaticLanguage();
+      let currentLanguage = languageMode;
+
+      function resolveAutomaticLanguage() {
+        // Nincs külön „Automatikus” opció: első indításkor a böngésző nyelve dönt.
+        const browserLanguage = (navigator.languages && navigator.languages[0]) || navigator.language || 'en';
+        return browserLanguage.toLowerCase().startsWith('hu') ? 'hu' : 'en';
+      }
+
+      function translate(value) {
+        if (currentLanguage !== 'en') return value;
+        return englishTranslations[value] || value;
+      }
+
+      function captureStaticTranslations() {
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+          acceptNode(node) {
+            const parentName = node.parentElement && node.parentElement.tagName;
+            if (parentName === 'SCRIPT' || parentName === 'STYLE') return NodeFilter.FILTER_REJECT;
+            return node.nodeValue && node.nodeValue.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+          }
+        });
+
+        let node;
+        while ((node = walker.nextNode())) {
+          const original = node.nodeValue;
+          const trimmed = original.trim();
+          const start = original.indexOf(trimmed);
+          staticTextBindings.push({
+            node,
+            original: trimmed,
+            prefix: original.slice(0, start),
+            suffix: original.slice(start + trimmed.length)
+          });
+        }
+
+        document.querySelectorAll('[placeholder], [title], [aria-label]').forEach((element) => {
+          ['placeholder', 'title', 'aria-label'].forEach((attribute) => {
+            if (element.hasAttribute(attribute)) {
+              staticAttributeBindings.push({
+                element,
+                attribute,
+                original: element.getAttribute(attribute)
+              });
+            }
+          });
+        });
+      }
+
+      function formatScanDate(value) {
+        return new Intl.DateTimeFormat(currentLanguage === 'en' ? 'en-US' : 'hu-HU', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        }).format(value);
+      }
+
+      function refreshScanHistoryLanguage() {
+        scanHistory.querySelectorAll('.scan-history-item').forEach((item) => {
+          const value = item.scanValue || '';
+          const scannedAt = new Date(item.dataset.scannedAt);
+          const classification = classifyResult(value);
+          const typeChip = item.querySelector('[data-role="scan-type"]');
+          const timeChip = item.querySelector('[data-role="scan-time"]');
+
+          if (typeChip) typeChip.textContent = `${translate('Típus')}: ${classification.label}`;
+          if (timeChip && !Number.isNaN(scannedAt.getTime())) {
+            timeChip.textContent = `${translate('Beolvasva')}: ${formatScanDate(scannedAt)}`;
+          }
+
+          item.querySelectorAll('button[data-action]').forEach((button) => {
+            const labels = {
+              copy: 'Másolás',
+              'generate-qr': 'QR-kód',
+              open: 'Megnyitás',
+              delete: 'Törlés'
+            };
+            const label = labels[button.dataset.action];
+            if (label) button.textContent = translate(label);
+            if (button.dataset.action === 'generate-qr') {
+              const accessibleLabel = translate('QR-kód generálása ebből a tartalomból');
+              button.setAttribute('aria-label', accessibleLabel);
+              button.title = accessibleLabel;
+            }
+          });
+        });
+      }
+
+      function applyLanguage() {
+        currentLanguage = languageMode;
+        document.documentElement.lang = currentLanguage;
+
+        staticTextBindings.forEach((binding) => {
+          binding.node.nodeValue = `${binding.prefix}${translate(binding.original)}${binding.suffix}`;
+        });
+        staticAttributeBindings.forEach((binding) => {
+          binding.element.setAttribute(binding.attribute, translate(binding.original));
+        });
+
+        document.title = translate('QR Studio – Generátor és olvasó');
+        const description = document.querySelector('meta[name="description"]');
+        if (description) description.setAttribute('content', translate('Modern, mobilbarát QR-kód generátor és olvasó.'));
+        languageSelect.value = languageMode;
+        languageCurrent.textContent = languageMode.toUpperCase();
+        document.querySelectorAll('.status[data-message-key]').forEach((element) => {
+          element.textContent = translate(element.dataset.messageKey);
+        });
+        refreshScanHistoryLanguage();
+      }
+
+      function setLanguageMode(mode, persist = true) {
+        languageMode = ['hu', 'en'].includes(mode) ? mode : resolveAutomaticLanguage();
+        if (persist) {
+          try {
+            localStorage.setItem(LANGUAGE_STORAGE_KEY, languageMode);
+          } catch (error) {
+            console.warn('Language preference could not be saved:', error);
+          }
+        }
+        applyLanguage();
+      }
+
+      function initializeLanguage() {
+        try {
+          const savedMode = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+          if (['hu', 'en'].includes(savedMode)) languageMode = savedMode;
+          else languageMode = resolveAutomaticLanguage();
+        } catch (error) {
+          console.warn('Language preference could not be loaded:', error);
+        }
+        applyLanguage();
+      }
 
       const levelMap = () => ({
         L: QRCode.CorrectLevel.L,
@@ -1018,12 +1361,14 @@
       });
 
       function showStatus(element, message, kind = 'info') {
-        element.textContent = message;
+        element.dataset.messageKey = message;
+        element.textContent = translate(message);
         element.className = `status show ${kind}`;
       }
 
       function hideStatus(element) {
         element.textContent = '';
+        element.removeAttribute('data-message-key');
         element.className = 'status';
       }
 
@@ -1076,6 +1421,7 @@
 
       generatorTab.addEventListener('click', () => selectTab('generator'));
       scannerTab.addEventListener('click', () => selectTab('scanner'));
+      languageSelect.addEventListener('change', () => setLanguageMode(languageSelect.value));
 
       qrText.addEventListener('input', () => {
         charCount.textContent = String(qrText.value.length);
@@ -1211,11 +1557,11 @@
 
       function classifyResult(value) {
         const trimmed = value.trim();
-        if (/^https?:\/\//i.test(trimmed)) return { label: 'webcím', openable: true };
-        if (/^mailto:/i.test(trimmed)) return { label: 'e-mail', openable: true };
-        if (/^tel:/i.test(trimmed)) return { label: 'telefonszám', openable: true };
-        if (/^WIFI:/i.test(trimmed)) return { label: 'Wi-Fi beállítás', openable: false };
-        return { label: 'szöveg', openable: false };
+        if (/^https?:\/\//i.test(trimmed)) return { label: translate('webcím'), openable: true };
+        if (/^mailto:/i.test(trimmed)) return { label: translate('e-mail'), openable: true };
+        if (/^tel:/i.test(trimmed)) return { label: translate('telefonszám'), openable: true };
+        if (/^WIFI:/i.test(trimmed)) return { label: translate('Wi-Fi beállítás'), openable: false };
+        return { label: translate('szöveg'), openable: false };
       }
 
       function createActionButton(label, action, kind = 'secondary', accessibleLabel = '') {
@@ -1223,10 +1569,10 @@
         button.type = 'button';
         button.className = `btn btn-${kind}`;
         button.dataset.action = action;
-        button.textContent = label;
+        button.textContent = translate(label);
         if (accessibleLabel) {
-          button.setAttribute('aria-label', accessibleLabel);
-          button.title = accessibleLabel;
+          button.setAttribute('aria-label', translate(accessibleLabel));
+          button.title = translate(accessibleLabel);
         }
         return button;
       }
@@ -1310,18 +1656,13 @@
 
         const typeChip = document.createElement('span');
         typeChip.className = 'meta-chip';
-        typeChip.textContent = `Típus: ${classification.label}`;
+        typeChip.dataset.role = 'scan-type';
+        typeChip.textContent = `${translate('Típus')}: ${classification.label}`;
 
         const timeChip = document.createElement('span');
         timeChip.className = 'meta-chip';
-        timeChip.textContent = `Beolvasva: ${new Intl.DateTimeFormat('hu-HU', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit'
-        }).format(scannedAt)}`;
+        timeChip.dataset.role = 'scan-time';
+        timeChip.textContent = `${translate('Beolvasva')}: ${formatScanDate(scannedAt)}`;
 
         meta.append(typeChip, timeChip);
 
@@ -1521,7 +1862,13 @@
           await selectTab('generator');
           generateQrCode();
           const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-          generatorPanel.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+          window.requestAnimationFrame(() => {
+            qrStage.scrollIntoView({
+              behavior: reduceMotion ? 'auto' : 'smooth',
+              block: 'center',
+              inline: 'nearest'
+            });
+          });
           return;
         }
 
@@ -1545,6 +1892,8 @@
 
       window.addEventListener('pagehide', () => { stopScannerSilently(); });
 
+      captureStaticTranslations();
+      initializeLanguage();
       loadScanHistory();
       if (location.hash === '#scanner') selectTab('scanner');
     })();
