@@ -7,7 +7,12 @@
   <meta name="description" content="Modern, mobilbarát QR-kód generátor és olvasó.">
   <title>QR Studio – Generátor és olvasó</title>
 
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImJnIiB4MT0iOCIgeTE9IjgiIHgyPSI1NiIgeTI9IjU2IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CiAgICAgIDxzdG9wIHN0b3AtY29sb3I9IiM2MzY2ZjEiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjNDMzOGNhIi8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxOCIgZmlsbD0idXJsKCNiZykiLz4KICA8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMiAxMikgc2NhbGUoMS42NjY2NjY3KSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIiPgogICAgPHJlY3QgeD0iMyIgeT0iMyIgd2lkdGg9IjYiIGhlaWdodD0iNiIvPgogICAgPHJlY3QgeD0iMTUiIHk9IjMiIHdpZHRoPSI2IiBoZWlnaHQ9IjYiLz4KICAgIDxyZWN0IHg9IjMiIHk9IjE1IiB3aWR0aD0iNiIgaGVpZ2h0PSI2Ii8+CiAgICA8cmVjdCB4PSIxNCIgeT0iMTQiIHdpZHRoPSI4IiBoZWlnaHQ9IjgiIGZpbGw9IiNmZmYiIHN0cm9rZT0ibm9uZSIvPgogIDwvZz4KPC9zdmc+Cg==">
+  <link rel="icon" type="image/png" href="/qr-studio/assets/images/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="/qr-studio/assets/images/favicon.svg" />
+  <link rel="shortcut icon" href="/qr-studio/assets/images/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/qr-studio/assets/images/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-title" content="QR-Studio" />
+  <link rel="manifest" href="/qr-studio/assets/images/site.webmanifest" />
 
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js" defer></script>
@@ -589,24 +594,61 @@
       scroll-margin-top: 18px;
     }
 
-    .result-output {
+    .scan-history-empty {
       min-height: 134px;
-      padding: 14px;
-      border: 1px solid var(--border);
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      border: 1px dashed var(--border);
       border-radius: 15px;
+      color: var(--muted);
+      background: color-mix(in srgb, var(--surface-solid) 66%, transparent);
+      text-align: center;
+      line-height: 1.55;
+    }
+
+    .scan-history-empty[hidden] { display: none; }
+
+    .scan-history {
+      display: grid;
+      gap: 12px;
+    }
+
+    .scan-history:empty { display: none; }
+
+    .scan-history-item {
+      padding: 15px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
       background: color-mix(in srgb, var(--surface-solid) 78%, transparent);
+      scroll-margin-top: 18px;
+    }
+
+    .scan-history-item:focus-visible {
+      outline: 3px solid rgba(99, 102, 241, 0.38);
+      outline-offset: 2px;
+    }
+
+    .scan-history-main {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .scan-history-content { min-width: 0; }
+
+    .scan-history-value {
       overflow-wrap: anywhere;
       white-space: pre-wrap;
       line-height: 1.55;
     }
 
-    .result-output.empty { color: var(--muted); }
-
-    .result-meta {
+    .scan-history-meta {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      margin-top: 12px;
+      margin-top: 11px;
     }
 
     .meta-chip {
@@ -617,11 +659,21 @@
       font-size: .75rem;
     }
 
-    .result-actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-top: 14px;
+    .scan-history-actions {
+      display: flex;
+      flex-wrap: nowrap;
+      justify-content: flex-start;
+      gap: 8px;
+      width: 100%;
+      max-width: none;
+      margin-top: 12px;
+    }
+
+    .scan-history-actions .btn {
+      min-height: 38px;
+      padding: 0 12px;
+      border-radius: 11px;
+      font-size: .8rem;
     }
 
     .security-note {
@@ -649,6 +701,14 @@
     @media (max-width: 860px) {
       .workspace, .scanner-layout { grid-template-columns: 1fr; }
       .preview-card { position: static; }
+      .scan-history-actions {
+        justify-content: stretch;
+      }
+      .scan-history-actions .btn {
+        flex: 1 1 0;
+        min-width: 0;
+        padding-inline: 8px;
+      }
     }
 
     @media (max-width: 600px) {
@@ -659,10 +719,12 @@
       .hero { margin-top: 8px; }
       .options-grid { grid-template-columns: 1fr; }
       .actions { grid-template-columns: 1fr; }
-      .preview-actions, .scanner-controls, .result-actions { grid-template-columns: 1fr; }
+      .preview-actions, .scanner-controls { grid-template-columns: 1fr; }
       .qr-stage { min-height: 320px; padding: 18px; }
       .scanner-box, #reader { min-height: 330px; }
       #reader__scan_region { min-height: 280px; }
+      .scan-history-actions { gap: 6px; }
+      .scan-history-actions .btn { padding-inline: 6px; font-size: .76rem; }
     }
   </style>
 </head>
@@ -861,7 +923,7 @@
                 Kép kiválasztása
                 <input id="qr-file" type="file" accept="image/*" aria-label="QR-kódot tartalmazó kép kiválasztása a galériából vagy a fájlok közül">
               </label>
-              <button class="btn btn-secondary" id="clear-result" type="button">Eredmény törlése</button>
+              <button class="btn btn-secondary" id="clear-result" type="button" disabled>Összes törlése</button>
             </div>
 
             <div class="status" id="scanner-status" role="status" aria-live="polite"></div>
@@ -873,24 +935,16 @@
             <div class="section-heading">
               <div>
                 <h2>Beolvasott tartalom</h2>
-                <p>A találat csak szövegként jelenik meg, automatikusan nem nyílik meg.</p>
+                <p>A beolvasások ezen a böngészőn megmaradnak, amíg nem törlöd őket.</p>
               </div>
             </div>
 
-            <div class="result-output empty" id="scan-result" tabindex="-1" aria-live="polite">Még nincs beolvasott QR-kód.</div>
-            <div class="result-meta" id="result-meta" hidden>
-              <span class="meta-chip" id="result-type">Típus: szöveg</span>
-              <span class="meta-chip" id="result-time">Beolvasva: –</span>
-            </div>
-
-            <div class="result-actions">
-              <button class="btn btn-primary" id="open-result" type="button" disabled>Megnyitás</button>
-              <button class="btn btn-secondary" id="copy-result" type="button" disabled>Szöveg másolása</button>
-            </div>
+            <div class="scan-history-empty" id="scan-history-empty" tabindex="-1">Még nincs beolvasott QR-kód.</div>
+            <div class="scan-history" id="scan-history" role="list" aria-live="polite" aria-label="Beolvasási előzmények"></div>
 
             <div class="security-note">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="M12 8v4M12 16h.01"></path></svg>
-              <span>Ismeretlen QR-kódnál ellenőrizd a webcímet megnyitás előtt. Az oldal csak a biztonságosnak tekintett <strong>https</strong>, <strong>http</strong>, <strong>mailto</strong> és <strong>tel</strong> hivatkozásokat engedi megnyitni.</span>
+              <span>Ismeretlen QR-kódnál ellenőrizd a webcímet megnyitás előtt. A beolvasási előzmények csak ezen a készüléken, a böngésző helyi tárhelyén maradnak meg. Az oldal csak a <strong>https</strong>, <strong>http</strong>, <strong>mailto</strong> és <strong>tel</strong> hivatkozásokat engedi megnyitni.</span>
             </div>
           </div>
         </aside>
@@ -941,12 +995,8 @@
       const qrFileInput = $('#qr-file');
       const clearResultButton = $('#clear-result');
       const scannerStatus = $('#scanner-status');
-      const scanResult = $('#scan-result');
-      const resultMeta = $('#result-meta');
-      const resultType = $('#result-type');
-      const resultTime = $('#result-time');
-      const openResultButton = $('#open-result');
-      const copyResultButton = $('#copy-result');
+      const scanHistory = $('#scan-history');
+      const scanHistoryEmpty = $('#scan-history-empty');
 
       let html5QrCode = null;
       let scannerRunning = false;
@@ -954,6 +1004,11 @@
       let successOverlayTimer = 0;
       let lastScanValue = '';
       let lastScanAt = 0;
+      let latestScanItem = null;
+      let scanItemSequence = 0;
+
+      const SCAN_HISTORY_STORAGE_KEY = 'qr-studio.scan-history.v1';
+      const MAX_STORED_SCANS = 100;
 
       const levelMap = () => ({
         L: QRCode.CorrectLevel.L,
@@ -988,7 +1043,9 @@
       function moveToScanResult() {
         const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         scanResultCard.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
-        window.setTimeout(() => scanResult.focus({ preventScroll: true }), reduceMotion ? 0 : 420);
+        window.setTimeout(() => {
+          if (latestScanItem && latestScanItem.isConnected) latestScanItem.focus({ preventScroll: true });
+        }, reduceMotion ? 0 : 420);
       }
 
       async function stopScannerSilently() {
@@ -1161,6 +1218,161 @@
         return { label: 'szöveg', openable: false };
       }
 
+      function createActionButton(label, action, kind = 'secondary', accessibleLabel = '') {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `btn btn-${kind}`;
+        button.dataset.action = action;
+        button.textContent = label;
+        if (accessibleLabel) {
+          button.setAttribute('aria-label', accessibleLabel);
+          button.title = accessibleLabel;
+        }
+        return button;
+      }
+
+      function createScanId() {
+        if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+          return window.crypto.randomUUID();
+        }
+        scanItemSequence += 1;
+        return `${Date.now()}-${scanItemSequence}-${Math.random().toString(16).slice(2)}`;
+      }
+
+      function getHistoryRecordsFromDom() {
+        return Array.from(scanHistory.querySelectorAll('.scan-history-item'))
+          .slice(0, MAX_STORED_SCANS)
+          .map((item) => ({
+            id: item.dataset.scanId,
+            value: item.scanValue || '',
+            scannedAt: item.dataset.scannedAt
+          }));
+      }
+
+      function saveScanHistory() {
+        try {
+          const records = getHistoryRecordsFromDom();
+          localStorage.setItem(SCAN_HISTORY_STORAGE_KEY, JSON.stringify(records));
+        } catch (error) {
+          console.warn('A beolvasási előzmények mentése nem sikerült:', error);
+        }
+      }
+
+      function loadScanHistory() {
+        let records = [];
+        try {
+          const storedValue = localStorage.getItem(SCAN_HISTORY_STORAGE_KEY);
+          const parsedValue = storedValue ? JSON.parse(storedValue) : [];
+          if (Array.isArray(parsedValue)) {
+            records = parsedValue
+              .filter((record) => record && typeof record.value === 'string' && record.value.length > 0)
+              .slice(0, MAX_STORED_SCANS);
+          }
+        } catch (error) {
+          console.warn('A beolvasási előzmények betöltése nem sikerült:', error);
+        }
+
+        records.slice().reverse().forEach((record) => {
+          const scannedAt = new Date(record.scannedAt);
+          addScanHistoryItem(
+            record.value,
+            classifyResult(record.value),
+            Number.isNaN(scannedAt.getTime()) ? new Date() : scannedAt,
+            record.id || createScanId(),
+            false
+          );
+        });
+
+        updateHistoryEmptyState();
+      }
+
+      function addScanHistoryItem(value, classification, scannedAt = new Date(), scanId = createScanId(), shouldSave = true) {
+        const item = document.createElement('article');
+        item.className = 'scan-history-item';
+        item.setAttribute('role', 'listitem');
+        item.setAttribute('tabindex', '-1');
+        item.dataset.scanId = String(scanId);
+        item.dataset.scannedAt = scannedAt.toISOString();
+        item.scanValue = value;
+
+        const main = document.createElement('div');
+        main.className = 'scan-history-main';
+
+        const content = document.createElement('div');
+        content.className = 'scan-history-content';
+
+        const valueElement = document.createElement('div');
+        valueElement.className = 'scan-history-value';
+        valueElement.textContent = value;
+
+        const meta = document.createElement('div');
+        meta.className = 'scan-history-meta';
+
+        const typeChip = document.createElement('span');
+        typeChip.className = 'meta-chip';
+        typeChip.textContent = `Típus: ${classification.label}`;
+
+        const timeChip = document.createElement('span');
+        timeChip.className = 'meta-chip';
+        timeChip.textContent = `Beolvasva: ${new Intl.DateTimeFormat('hu-HU', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        }).format(scannedAt)}`;
+
+        meta.append(typeChip, timeChip);
+
+        const actions = document.createElement('div');
+        actions.className = 'scan-history-actions';
+        actions.append(createActionButton('Másolás', 'copy'));
+        actions.append(createActionButton('QR-kód', 'generate-qr', 'secondary', 'QR-kód generálása ebből a tartalomból'));
+        if (classification.openable) actions.append(createActionButton('Megnyitás', 'open', 'primary'));
+        actions.append(createActionButton('Törlés', 'delete', 'danger'));
+
+        content.append(valueElement, actions, meta);
+        main.append(content);
+        item.append(main);
+        scanHistory.prepend(item);
+
+        while (scanHistory.children.length > MAX_STORED_SCANS) {
+          scanHistory.lastElementChild.remove();
+        }
+
+        scanHistoryEmpty.hidden = true;
+        clearResultButton.disabled = false;
+        latestScanItem = item;
+        if (shouldSave) saveScanHistory();
+        return item;
+      }
+
+      function updateHistoryEmptyState() {
+        const hasItems = Boolean(scanHistory.children.length);
+        scanHistoryEmpty.hidden = hasItems;
+        clearResultButton.disabled = !hasItems;
+        if (!hasItems) latestScanItem = null;
+      }
+
+      async function copyTextToClipboard(value) {
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+          await navigator.clipboard.writeText(value);
+          return;
+        }
+
+        const helper = document.createElement('textarea');
+        helper.value = value;
+        helper.setAttribute('readonly', '');
+        helper.style.position = 'fixed';
+        helper.style.opacity = '0';
+        document.body.append(helper);
+        helper.select();
+        const copied = document.execCommand('copy');
+        helper.remove();
+        if (!copied) throw new Error('A másolás nem támogatott.');
+      }
+
       async function handleScanSuccess(decodedText) {
         const now = Date.now();
         if (scanCompleting || (decodedText === lastScanValue && now - lastScanAt < 1800)) return;
@@ -1169,13 +1381,7 @@
         lastScanAt = now;
 
         const classification = classifyResult(decodedText);
-        scanResult.textContent = decodedText;
-        scanResult.classList.remove('empty');
-        resultMeta.hidden = false;
-        resultType.textContent = `Típus: ${classification.label}`;
-        resultTime.textContent = `Beolvasva: ${new Intl.DateTimeFormat('hu-HU', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date())}`;
-        copyResultButton.disabled = false;
-        openResultButton.disabled = !classification.openable;
+        addScanHistoryItem(decodedText, classification);
         showStatus(scannerStatus, 'A QR-kód beolvasása sikerült. A kamera automatikusan leállt.', 'success');
         showScannerSuccess();
 
@@ -1279,34 +1485,67 @@
         scanCompleting = false;
         lastScanValue = '';
         lastScanAt = 0;
-        scanResult.textContent = 'Még nincs beolvasott QR-kód.';
-        scanResult.classList.add('empty');
-        resultMeta.hidden = true;
-        openResultButton.disabled = true;
-        copyResultButton.disabled = true;
+        scanHistory.replaceChildren();
+        try {
+          localStorage.removeItem(SCAN_HISTORY_STORAGE_KEY);
+        } catch (error) {
+          console.warn('A beolvasási előzmények törlése nem sikerült:', error);
+        }
+        updateHistoryEmptyState();
         hideStatus(scannerStatus);
       });
 
-      copyResultButton.addEventListener('click', async () => {
-        if (!lastScanValue) return;
-        try {
-          await navigator.clipboard.writeText(lastScanValue);
-          showStatus(scannerStatus, 'A beolvasott tartalom a vágólapra került.', 'success');
-        } catch (error) {
-          console.error(error);
-          showStatus(scannerStatus, 'A másolást a böngésző nem engedélyezte. Jelöld ki és másold ki kézzel a szöveget.', 'error');
-        }
-      });
+      scanHistory.addEventListener('click', async (event) => {
+        const button = event.target.closest('button[data-action]');
+        if (!button || !scanHistory.contains(button)) return;
 
-      openResultButton.addEventListener('click', () => {
-        if (!lastScanValue) return;
-        const value = lastScanValue.trim();
-        if (!/^(https?:\/\/|mailto:|tel:)/i.test(value)) return;
-        window.open(value, '_blank', 'noopener,noreferrer');
+        const item = button.closest('.scan-history-item');
+        if (!item) return;
+        const value = item.scanValue || '';
+        const action = button.dataset.action;
+
+        if (action === 'copy') {
+          try {
+            await copyTextToClipboard(value);
+            showStatus(scannerStatus, 'A kiválasztott tartalom a vágólapra került.', 'success');
+          } catch (error) {
+            console.error(error);
+            showStatus(scannerStatus, 'A másolást a böngésző nem engedélyezte. Jelöld ki és másold ki kézzel a szöveget.', 'error');
+          }
+          return;
+        }
+
+        if (action === 'generate-qr') {
+          qrText.value = value;
+          charCount.textContent = String(value.length);
+          await selectTab('generator');
+          generateQrCode();
+          const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          generatorPanel.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+          return;
+        }
+
+        if (action === 'open') {
+          const target = value.trim();
+          if (/^(https?:\/\/|mailto:|tel:)/i.test(target)) {
+            window.open(target, '_blank', 'noopener,noreferrer');
+          }
+          return;
+        }
+
+        if (action === 'delete') {
+          const wasLatest = item === latestScanItem;
+          item.remove();
+          if (wasLatest) latestScanItem = scanHistory.firstElementChild;
+          updateHistoryEmptyState();
+          saveScanHistory();
+          showStatus(scannerStatus, 'A kiválasztott beolvasás törölve.', 'info');
+        }
       });
 
       window.addEventListener('pagehide', () => { stopScannerSilently(); });
 
+      loadScanHistory();
       if (location.hash === '#scanner') selectTab('scanner');
     })();
   </script>
