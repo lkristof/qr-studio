@@ -664,7 +664,9 @@
       .scanner-success, .scanner-success-mark { transition: none; animation: none !important; }
       .scanner-success-mark { transform: scale(1); }
       .brand-mark,
-      .logo-tap-animate { animation: none !important; transform: none !important; }
+      .logo-tap-animate,
+      .confirm-modal-backdrop,
+      .confirm-dialog { animation: none !important; transform: none !important; }
     }
 
     .scan-frame {
@@ -864,6 +866,85 @@
 
     .security-note svg { width: 18px; height: 18px; flex: 0 0 18px; color: var(--primary); }
 
+    .confirm-modal[hidden] { display: none; }
+
+    .confirm-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+    }
+
+    .confirm-modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(9, 13, 24, 0.58);
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+      animation: modal-fade-in .18s ease-out;
+    }
+
+    .confirm-dialog {
+      position: relative;
+      z-index: 1;
+      width: min(430px, 100%);
+      padding: clamp(20px, 5vw, 28px);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      background: color-mix(in srgb, var(--surface-solid) 96%, transparent);
+      box-shadow: 0 28px 80px rgba(0, 0, 0, 0.30);
+      -webkit-backdrop-filter: blur(22px);
+      backdrop-filter: blur(22px);
+      animation: modal-pop-in .2s cubic-bezier(.2, .8, .2, 1);
+    }
+
+    .confirm-dialog-icon {
+      display: grid;
+      place-items: center;
+      width: 52px;
+      height: 52px;
+      margin-bottom: 18px;
+      border-radius: 16px;
+      color: var(--danger);
+      background: var(--danger-soft);
+    }
+
+    .confirm-dialog-icon svg { width: 25px; height: 25px; }
+
+    .confirm-dialog h2 {
+      margin: 0;
+      font-size: 1.2rem;
+      letter-spacing: -0.02em;
+    }
+
+    .confirm-dialog p {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: .9rem;
+      line-height: 1.6;
+    }
+
+    .confirm-dialog-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    body.modal-open { overflow: hidden; }
+
+    @keyframes modal-fade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes modal-pop-in {
+      from { opacity: 0; transform: translateY(8px) scale(.975); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
     footer {
       margin-top: 26px;
       color: var(--muted);
@@ -901,6 +982,10 @@
       #reader__scan_region { min-height: 280px; }
       .scan-history-actions { gap: 6px; }
       .scan-history-actions .btn { padding-inline: 6px; font-size: .76rem; }
+      .confirm-modal { padding: 14px; }
+      .confirm-dialog { border-radius: 20px; }
+      .confirm-dialog-actions { grid-template-columns: 1fr; }
+      #confirm-delete-history { order: -1; }
     }
   </style>
 </head>
@@ -1158,6 +1243,26 @@
     </footer>
   </main>
 
+  <div class="confirm-modal" id="delete-history-modal" hidden>
+    <div class="confirm-modal-backdrop" data-modal-close aria-hidden="true"></div>
+    <section class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="delete-history-title" aria-describedby="delete-history-description" tabindex="-1">
+      <div class="confirm-dialog-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 6h18"></path>
+          <path d="M8 6V4h8v2"></path>
+          <path d="M19 6l-1 14H6L5 6"></path>
+          <path d="M10 11v5M14 11v5"></path>
+        </svg>
+      </div>
+      <h2 id="delete-history-title">Összes beolvasás törlése?</h2>
+      <p id="delete-history-description">Biztosan törlöd az összes beolvasott elemet? Ez a művelet nem vonható vissza.</p>
+      <div class="confirm-dialog-actions">
+        <button class="btn btn-secondary" id="cancel-delete-history" type="button">Mégse</button>
+        <button class="btn btn-danger" id="confirm-delete-history" type="button">Összes törlése</button>
+      </div>
+    </section>
+  </div>
+
   <script>
     (() => {
       'use strict';
@@ -1205,6 +1310,11 @@
       const scanHistoryEmpty = $('#scan-history-empty');
       const languageSelect = $('#language-select');
       const languageCurrent = $('#language-current');
+      const deleteHistoryModal = $('#delete-history-modal');
+      const deleteHistoryDialog = deleteHistoryModal.querySelector('.confirm-dialog');
+      const cancelDeleteHistoryButton = $('#cancel-delete-history');
+      const confirmDeleteHistoryButton = $('#confirm-delete-history');
+      let deleteHistoryPreviousFocus = null;
 
       let html5QrCode = null;
       let scannerRunning = false;
@@ -1267,6 +1377,9 @@
         "Kamera zoom": "Camera zoom",
         "Kép kiválasztása": "Choose image",
         "Összes törlése": "Delete all",
+        "Összes beolvasás törlése?": "Delete all scans?",
+        "Mégse": "Cancel",
+        "Biztosan törlöd az összes beolvasott elemet? Ez a művelet nem vonható vissza.": "Are you sure you want to delete all scanned items? This action cannot be undone.",
         "Beolvasott tartalom": "Scanned content",
         "A beolvasások ezen a böngészőn megmaradnak, amíg nem törlöd őket.": "Scans remain stored in this browser until you delete them.",
         "Még nincs beolvasott QR-kód.": "No QR code has been scanned yet.",
@@ -2010,7 +2123,27 @@
         }
       });
 
-      clearResultButton.addEventListener('click', () => {
+      function openDeleteHistoryModal() {
+        if (!scanHistory.children.length) return;
+        deleteHistoryPreviousFocus = document.activeElement;
+        deleteHistoryModal.hidden = false;
+        document.body.classList.add('modal-open');
+        window.requestAnimationFrame(() => cancelDeleteHistoryButton.focus());
+      }
+
+      function closeDeleteHistoryModal() {
+        if (deleteHistoryModal.hidden) return;
+        deleteHistoryModal.hidden = true;
+        document.body.classList.remove('modal-open');
+        if (deleteHistoryPreviousFocus && !deleteHistoryPreviousFocus.disabled && typeof deleteHistoryPreviousFocus.focus === 'function') {
+          deleteHistoryPreviousFocus.focus();
+        } else if (!scanHistory.children.length) {
+          scanHistoryEmpty.focus();
+        }
+        deleteHistoryPreviousFocus = null;
+      }
+
+      function clearAllScanHistory() {
         hideScannerSuccess();
         scanCompleting = false;
         lastScanValue = '';
@@ -2023,6 +2156,36 @@
         }
         updateHistoryEmptyState();
         hideStatus(scannerStatus);
+      }
+
+      clearResultButton.addEventListener('click', openDeleteHistoryModal);
+      cancelDeleteHistoryButton.addEventListener('click', closeDeleteHistoryModal);
+      confirmDeleteHistoryButton.addEventListener('click', () => {
+        clearAllScanHistory();
+        closeDeleteHistoryModal();
+      });
+
+      deleteHistoryModal.addEventListener('click', (event) => {
+        if (event.target.hasAttribute('data-modal-close')) closeDeleteHistoryModal();
+      });
+
+      deleteHistoryModal.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          closeDeleteHistoryModal();
+          return;
+        }
+
+        if (event.key !== 'Tab') return;
+        const focusable = [cancelDeleteHistoryButton, confirmDeleteHistoryButton];
+        const currentIndex = focusable.indexOf(document.activeElement);
+        if (event.shiftKey && currentIndex <= 0) {
+          event.preventDefault();
+          focusable[focusable.length - 1].focus();
+        } else if (!event.shiftKey && currentIndex === focusable.length - 1) {
+          event.preventDefault();
+          focusable[0].focus();
+        }
       });
 
       scanHistory.addEventListener('click', async (event) => {
