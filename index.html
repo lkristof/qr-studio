@@ -721,6 +721,45 @@
       margin-top: 14px;
     }
 
+    .camera-zoom-control {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 12px;
+      margin-top: 14px;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: color-mix(in srgb, var(--surface-solid) 78%, transparent);
+    }
+
+    .camera-zoom-control[hidden] { display: none; }
+
+    .camera-zoom-control label {
+      white-space: nowrap;
+      color: var(--text);
+    }
+
+    .camera-zoom-control input[type="range"] {
+      width: 100%;
+      min-width: 0;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    .camera-zoom-control input[type="range"]:disabled {
+      cursor: not-allowed;
+      opacity: .55;
+    }
+
+    .camera-zoom-value {
+      min-width: 48px;
+      color: var(--muted);
+      font-size: .8rem;
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+    }
+
     .upload-label { cursor: pointer; }
     .upload-label input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 
@@ -1069,6 +1108,12 @@
               </div>
             </div>
 
+            <div class="camera-zoom-control" id="camera-zoom-control" hidden>
+              <label for="camera-zoom">Kamera zoom</label>
+              <input id="camera-zoom" type="range" min="1" max="1" step="0.1" value="1" disabled aria-label="Kamera zoom">
+              <span class="camera-zoom-value" id="camera-zoom-value" aria-live="polite">1×</span>
+            </div>
+
             <div class="scanner-controls">
               <button class="btn btn-primary" id="start-camera" type="button">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14.5 4H9.5L8 7H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"></path><circle cx="12" cy="13" r="3"></circle></svg>
@@ -1150,6 +1195,9 @@
       const scanResultCard = $('#scan-result-card');
       const startCameraButton = $('#start-camera');
       const stopCameraButton = $('#stop-camera');
+      const cameraZoomControl = $('#camera-zoom-control');
+      const cameraZoomInput = $('#camera-zoom');
+      const cameraZoomValue = $('#camera-zoom-value');
       const qrFileInput = $('#qr-file');
       const clearResultButton = $('#clear-result');
       const scannerStatus = $('#scanner-status');
@@ -1216,6 +1264,7 @@
         "A kamera leállt. Megjelenítjük a beolvasott tartalmat.": "The camera has stopped. Showing the scanned content.",
         "Kamera indítása": "Start camera",
         "Kamera leállítása": "Stop camera",
+        "Kamera zoom": "Camera zoom",
         "Kép kiválasztása": "Choose image",
         "Összes törlése": "Delete all",
         "Beolvasott tartalom": "Scanned content",
@@ -1451,6 +1500,68 @@
         }, reduceMotion ? 0 : 420);
       }
 
+      function formatCameraZoom(value) {
+        const rounded = Math.round(Number(value) * 100) / 100;
+        return `${Number.isInteger(rounded) ? rounded.toFixed(0) : rounded.toFixed(2).replace(/0$/, '')}×`;
+      }
+
+      function resetCameraZoomControl() {
+        cameraZoomControl.hidden = true;
+        cameraZoomInput.disabled = true;
+        cameraZoomInput.min = '1';
+        cameraZoomInput.max = '1';
+        cameraZoomInput.step = '0.1';
+        cameraZoomInput.value = '1';
+        cameraZoomValue.textContent = '1×';
+      }
+
+      function configureCameraZoom() {
+        resetCameraZoomControl();
+        if (!html5QrCode || !scannerRunning || typeof html5QrCode.getRunningTrackCapabilities !== 'function') return;
+
+        try {
+          const capabilities = html5QrCode.getRunningTrackCapabilities();
+          const zoom = capabilities && capabilities.zoom;
+          if (!zoom || !Number.isFinite(zoom.min) || !Number.isFinite(zoom.max) || zoom.max <= zoom.min) return;
+
+          const settings = typeof html5QrCode.getRunningTrackSettings === 'function'
+            ? html5QrCode.getRunningTrackSettings()
+            : {};
+          const step = Number.isFinite(zoom.step) && zoom.step > 0
+            ? zoom.step
+            : Math.max((zoom.max - zoom.min) / 100, 0.01);
+          const currentZoom = Number.isFinite(settings.zoom)
+            ? Math.min(zoom.max, Math.max(zoom.min, settings.zoom))
+            : zoom.min;
+
+          cameraZoomInput.min = String(zoom.min);
+          cameraZoomInput.max = String(zoom.max);
+          cameraZoomInput.step = String(step);
+          cameraZoomInput.value = String(currentZoom);
+          cameraZoomValue.textContent = formatCameraZoom(currentZoom);
+          cameraZoomInput.disabled = false;
+          cameraZoomControl.hidden = false;
+        } catch (error) {
+          console.warn('A kamera zoom képessége nem kérdezhető le:', error);
+          resetCameraZoomControl();
+        }
+      }
+
+      cameraZoomInput.addEventListener('input', async () => {
+        const zoomValue = Number.parseFloat(cameraZoomInput.value);
+        cameraZoomValue.textContent = formatCameraZoom(zoomValue);
+
+        if (!html5QrCode || !scannerRunning || !Number.isFinite(zoomValue)) return;
+
+        try {
+          await html5QrCode.applyVideoConstraints({
+            advanced: [{ zoom: zoomValue }]
+          });
+        } catch (error) {
+          console.warn('A kamera zoom beállítása nem sikerült:', error);
+        }
+      });
+
       async function stopScannerSilently() {
         if (!html5QrCode || !scannerRunning) return;
         try {
@@ -1463,6 +1574,7 @@
           startCameraButton.disabled = false;
           stopCameraButton.disabled = true;
           scannerPlaceholder.classList.remove('hidden');
+          resetCameraZoomControl();
         }
       }
 
@@ -1819,6 +1931,7 @@
       startCameraButton.addEventListener('click', async () => {
         hideStatus(scannerStatus);
         hideScannerSuccess();
+        resetCameraZoomControl();
         scanCompleting = false;
 
         if (!window.isSecureContext && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
@@ -1852,6 +1965,7 @@
           scannerRunning = true;
           scannerPlaceholder.classList.add('hidden');
           stopCameraButton.disabled = false;
+          configureCameraZoom();
           hideStatus(scannerStatus);
         } catch (error) {
           console.error(error);
