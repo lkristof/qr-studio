@@ -1,11 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64"><defs>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 64 64" role="img" aria-label="QR Studio">
+  <defs>
     <linearGradient id="bg" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#6366f1"></stop>
-      <stop offset="1" stop-color="#4338ca"></stop>
+      <stop stop-color="#6366f1"/>
+      <stop offset="1" stop-color="#4338ca"/>
     </linearGradient>
-  </defs><rect width="64" height="64" rx="18" fill="url(#bg)"></rect><g transform="translate(12 12) scale(1.6666667)" fill="none" stroke="#fff" stroke-width="2">
-    <rect x="3" y="3" width="6" height="6"></rect>
-    <rect x="15" y="3" width="6" height="6"></rect>
-    <rect x="3" y="15" width="6" height="6"></rect>
-    <rect x="14" y="14" width="8" height="8" fill="#fff" stroke="none"></rect>
-  </g></svg>
+  </defs>
+  <path d="M32 0C17.6 0 10.4 0 5.2 5.2C0 10.4 0 17.6 0 32C0 46.4 0 53.6 5.2 58.8C10.4 64 17.6 64 32 64C46.4 64 53.6 64 58.8 58.8C64 53.6 64 46.4 64 32C64 17.6 64 10.4 58.8 5.2C53.6 0 46.4 0 32 0Z" fill="url(#bg)"/>
+  <g transform="translate(12 12) scale(1.6666667)" fill="none" stroke="#fff" stroke-width="2">
+    <rect x="3" y="3" width="6" height="6"/>
+    <rect x="15" y="3" width="6" height="6"/>
+    <rect x="3" y="15" width="6" height="6"/>
+    <rect x="14" y="14" width="8" height="8" fill="#fff" stroke="none"/>
+  </g>
+</svg>
