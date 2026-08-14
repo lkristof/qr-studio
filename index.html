@@ -1109,17 +1109,42 @@
 
     .scan-history-meta {
       display: flex;
+      align-items: center;
       flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 11px;
+      gap: 6px;
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: .72rem;
+      line-height: 1.2;
     }
 
     .meta-chip {
-      padding: 7px 10px;
+      display: inline-flex;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .meta-type {
+      padding: 4px 7px;
       border-radius: 999px;
-      color: var(--muted);
-      background: color-mix(in srgb, var(--surface-solid) 72%, transparent);
-      font-size: .75rem;
+      color: var(--primary);
+      background: var(--primary-soft);
+      font-weight: 800;
+    }
+
+    .meta-time {
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .meta-time::before {
+      content: "";
+      width: 4px;
+      height: 4px;
+      flex: 0 0 4px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: .55;
     }
 
     .scan-history-actions {
@@ -2224,8 +2249,7 @@
           month: '2-digit',
           day: '2-digit',
           hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit'
+          minute: '2-digit'
         }).format(value);
       }
 
@@ -2237,9 +2261,13 @@
           const typeChip = item.querySelector('[data-role="scan-type"]');
           const timeChip = item.querySelector('[data-role="scan-time"]');
 
-          if (typeChip) typeChip.textContent = `${translate('Típus')}: ${classification.label}`;
+          if (typeChip) typeChip.textContent = classification.label;
           if (timeChip && !Number.isNaN(scannedAt.getTime())) {
-            timeChip.textContent = `${translate('Beolvasva')}: ${formatScanDate(scannedAt)}`;
+            const formattedDate = formatScanDate(scannedAt);
+            timeChip.textContent = formattedDate;
+            const accessibleDate = `${translate('Beolvasva')}: ${formattedDate}`;
+            timeChip.title = accessibleDate;
+            timeChip.setAttribute('aria-label', accessibleDate);
           }
 
           item.querySelectorAll('button[data-action]').forEach((button) => {
@@ -2270,9 +2298,13 @@
           const typeChip = item.querySelector('[data-role="generated-type"]');
           const timeChip = item.querySelector('[data-role="generated-time"]');
 
-          if (typeChip) typeChip.textContent = `${translate('Típus')}: ${translate(QR_TYPE_LABELS[type] || 'Szöveg')}`;
+          if (typeChip) typeChip.textContent = translate(QR_TYPE_LABELS[type] || 'Szöveg');
           if (timeChip && !Number.isNaN(generatedAt.getTime())) {
-            timeChip.textContent = `${translate('Generálva')}: ${formatScanDate(generatedAt)}`;
+            const formattedDate = formatScanDate(generatedAt);
+            timeChip.textContent = formattedDate;
+            const accessibleDate = `${translate('Generálva')}: ${formattedDate}`;
+            timeChip.title = accessibleDate;
+            timeChip.setAttribute('aria-label', accessibleDate);
           }
 
           item.querySelectorAll('button[data-action]').forEach((button) => {
@@ -3192,10 +3224,14 @@
         const typeChip = item.querySelector('[data-role="generated-type"]');
         const timeChip = item.querySelector('[data-role="generated-time"]');
         if (valueElement) valueElement.textContent = record.value;
-        if (typeChip) typeChip.textContent = `${translate('Típus')}: ${translate(QR_TYPE_LABELS[record.type] || 'Szöveg')}`;
+        if (typeChip) typeChip.textContent = translate(QR_TYPE_LABELS[record.type] || 'Szöveg');
         const generatedAt = new Date(record.generatedAt);
         if (timeChip && !Number.isNaN(generatedAt.getTime())) {
-          timeChip.textContent = `${translate('Generálva')}: ${formatScanDate(generatedAt)}`;
+          const formattedDate = formatScanDate(generatedAt);
+          timeChip.textContent = formattedDate;
+          const accessibleDate = `${translate('Generálva')}: ${formattedDate}`;
+          timeChip.title = accessibleDate;
+          timeChip.setAttribute('aria-label', accessibleDate);
         }
       }
 
@@ -3218,11 +3254,11 @@
         meta.className = 'scan-history-meta';
 
         const typeChip = document.createElement('span');
-        typeChip.className = 'meta-chip';
+        typeChip.className = 'meta-chip meta-type';
         typeChip.dataset.role = 'generated-type';
 
         const timeChip = document.createElement('span');
-        timeChip.className = 'meta-chip';
+        timeChip.className = 'meta-chip meta-time';
         timeChip.dataset.role = 'generated-time';
         meta.append(typeChip, timeChip);
 
@@ -3234,7 +3270,7 @@
         if (classification.openable) actions.append(createActionButton('Megnyitás', 'open', 'primary'));
         actions.append(createActionButton('Törlés', 'delete', 'danger'));
 
-        content.append(valueElement, actions, meta);
+        content.append(valueElement, meta, actions);
         main.append(content);
         item.append(main);
         applyGeneratedHistoryRecordToItem(item, record);
@@ -3502,14 +3538,18 @@
         meta.className = 'scan-history-meta';
 
         const typeChip = document.createElement('span');
-        typeChip.className = 'meta-chip';
+        typeChip.className = 'meta-chip meta-type';
         typeChip.dataset.role = 'scan-type';
-        typeChip.textContent = `${translate('Típus')}: ${classification.label}`;
+        typeChip.textContent = classification.label;
 
         const timeChip = document.createElement('span');
-        timeChip.className = 'meta-chip';
+        timeChip.className = 'meta-chip meta-time';
         timeChip.dataset.role = 'scan-time';
-        timeChip.textContent = `${translate('Beolvasva')}: ${formatScanDate(scannedAt)}`;
+        const formattedScanDate = formatScanDate(scannedAt);
+        timeChip.textContent = formattedScanDate;
+        const accessibleScanDate = `${translate('Beolvasva')}: ${formattedScanDate}`;
+        timeChip.title = accessibleScanDate;
+        timeChip.setAttribute('aria-label', accessibleScanDate);
 
         meta.append(typeChip, timeChip);
 
@@ -3520,7 +3560,7 @@
         if (classification.openable) actions.append(createActionButton('Megnyitás', 'open', 'primary'));
         actions.append(createActionButton('Törlés', 'delete', 'danger'));
 
-        content.append(valueElement, actions, meta);
+        content.append(valueElement, meta, actions);
         main.append(content);
         item.append(main);
         scanHistory.prepend(item);
