@@ -3,16 +3,40 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+  <title>QR Studio - Generálj és olvass be QR-kódokat</title>
+  <meta name="description" content="Készíts testreszabható QR-kódokat, vagy olvasd be őket kamerával vagy képfájlból, közvetlenül a böngészőben.">
+  <link rel="canonical" href="https://lkristof.github.io/qr-studio/" />
+
   <meta name="theme-color" content="#111827">
-  <meta name="description" content="Modern, mobilbarát QR-kód generátor és olvasó.">
-  <title>QR Studio – Generátor és olvasó</title>
+
+  <link rel="manifest" href="/qr-studio/site.webmanifest" />
+  <meta name="apple-mobile-web-app-title" content="QR Studio" />
 
   <link rel="icon" type="image/png" href="/qr-studio/assets/images/favicon-96x96.png" sizes="96x96" />
   <link rel="icon" type="image/svg+xml" href="/qr-studio/assets/images/favicon.svg" />
   <link rel="shortcut icon" href="/qr-studio/assets/images/favicon.ico" />
   <link rel="apple-touch-icon" sizes="180x180" href="/qr-studio/assets/images/apple-touch-icon.png" />
-  <meta name="apple-mobile-web-app-title" content="QR-Studio" />
-  <link rel="manifest" href="/qr-studio/site.webmanifest" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="QR Studio - Generálj és olvass be QR-kódokat" />
+  <meta property="og:description" content="Készíts testreszabható QR-kódokat, vagy olvasd be őket kamerával vagy képfájlból, közvetlenül a böngészőben." />
+  <meta property="og:url" content="https://lkristof.github.io/qr-studio/" />
+  <meta property="og:site_name" content="QR Studio" />
+  <meta property="og:locale" content="hu_HU" />
+  <meta property="og:locale:alternate" content="en_GB" />
+
+  <meta property="og:image" content="https://lkristof.github.io/qr-studio/assets/images/og-image.jpg" />
+  <meta property="og:image:type" content="image/jpeg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="QR Studio - QR-kódok generálása és beolvasása" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="QR Studio - Generálj és olvass be QR-kódokat" />
+  <meta name="twitter:description" content="Készíts testreszabható QR-kódokat, vagy olvasd be őket kamerával vagy képfájlból, közvetlenül a böngészőben." />
+  <meta name="twitter:image" content="https://lkristof.github.io/qr-studio/assets/images/og-image.jpg" />
+  <meta name="twitter:image:alt" content="QR Studio - QR-kódok generálása és beolvasása" />
 
   <!--
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.js" defer></script>
@@ -1995,7 +2019,7 @@
       const LANGUAGE_STORAGE_KEY = 'qr-studio.language.v1';
 
       const englishTranslations = {
-        "QR Studio – Generátor és olvasó": "QR Studio – Generator and scanner",
+        "QR Studio - Generálj és olvass be QR-kódokat": "QR Studio - Generate and scan QR codes",
         "Generátor és beolvasó egy helyen": "Generator and scanner in one place",
         "Helyi feldolgozás": "Local processing",
         "Gyors · modern · mobilbarát": "Fast · modern · mobile-friendly",
@@ -2181,7 +2205,7 @@
         "Az SVG-fájl letöltése elindult.": "The SVG download has started.",
         "SMS-üzenet": "SMS message",
         "névjegy": "contact",
-        "Modern, mobilbarát QR-kód generátor és olvasó.": "Modern, mobile-friendly QR code generator and scanner."
+        "Készíts testreszabható QR-kódokat, vagy olvasd be őket kamerával vagy képfájlból, közvetlenül a böngészőben.": "Create customizable QR codes, or scan them using your camera or an image file, directly in your browser."
 };
       const staticTextBindings = [];
       const staticAttributeBindings = [];
@@ -2328,9 +2352,9 @@
           binding.element.setAttribute(binding.attribute, translate(binding.original));
         });
 
-        document.title = translate('QR Studio – Generátor és olvasó');
+        document.title = translate('QR Studio - Generálj és olvass be QR-kódokat');
         const description = document.querySelector('meta[name="description"]');
-        if (description) description.setAttribute('content', translate('Modern, mobilbarát QR-kód generátor és olvasó.'));
+        if (description) description.setAttribute('content', translate('Készíts testreszabható QR-kódokat, vagy olvasd be őket kamerával vagy képfájlból, közvetlenül a böngészőben.'));
         languageSelect.value = languageMode;
         languageCurrent.textContent = languageMode.toUpperCase();
         refreshGeneratorLanguage();
