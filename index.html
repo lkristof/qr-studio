@@ -957,7 +957,9 @@
       .brand-mark,
       .logo-tap-animate,
       .confirm-modal-backdrop,
-      .confirm-dialog { animation: none !important; transform: none !important; }
+      .confirm-dialog,
+      .easter-egg-backdrop,
+      .easter-egg-card { animation: none !important; transform: none !important; }
     }
 
     .scan-frame {
@@ -1208,6 +1210,100 @@
     }
 
     .security-note svg { width: 18px; height: 18px; flex: 0 0 18px; color: var(--primary); }
+
+
+    .easter-egg-modal[hidden] { display: none; }
+
+    .easter-egg-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 120;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+    }
+
+    .easter-egg-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(9, 13, 24, 0.68);
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
+      animation: modal-fade-in .18s ease-out;
+    }
+
+    .easter-egg-card {
+      position: relative;
+      z-index: 1;
+      width: min(390px, 100%);
+      padding: 26px;
+      border: 1px solid var(--border);
+      border-radius: 26px;
+      background: color-mix(in srgb, var(--surface-solid) 97%, transparent);
+      box-shadow: 0 30px 90px rgba(0, 0, 0, 0.34);
+      -webkit-backdrop-filter: blur(22px);
+      backdrop-filter: blur(22px);
+      animation: modal-pop-in .22s cubic-bezier(.2, .8, .2, 1);
+      text-align: center;
+    }
+
+    .easter-egg-close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      display: grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--muted);
+      background: color-mix(in srgb, var(--surface-solid) 90%, transparent);
+      cursor: pointer;
+    }
+
+    .easter-egg-close:hover {
+      color: var(--text);
+      border-color: color-mix(in srgb, var(--primary) 38%, var(--border));
+    }
+
+    .easter-egg-card h2 {
+      margin: 2px 40px 8px;
+      font-size: 1.18rem;
+      letter-spacing: -0.02em;
+    }
+
+    .easter-egg-card p {
+      margin: 0 0 18px;
+      color: var(--muted);
+      font-size: .88rem;
+      line-height: 1.5;
+    }
+
+    .easter-egg-qr {
+      display: grid;
+      place-items: center;
+      width: fit-content;
+      margin: 0 auto;
+      padding: 14px;
+      border-radius: 18px;
+      background: #fff;
+      box-shadow: 0 16px 36px rgba(15, 23, 42, 0.16);
+    }
+
+    .easter-egg-qr img,
+    .easter-egg-qr canvas {
+      display: block;
+      width: 220px !important;
+      height: 220px !important;
+    }
+
+    .easter-egg-hint {
+      margin-top: 16px !important;
+      margin-bottom: 0 !important;
+      font-size: .76rem !important;
+    }
 
     .confirm-modal[hidden] { display: none; }
 
@@ -1871,6 +1967,17 @@
     </footer>
   </main>
 
+  <div class="easter-egg-modal" id="easter-egg-modal" hidden>
+    <div class="easter-egg-backdrop" data-easter-egg-close aria-hidden="true"></div>
+    <section class="easter-egg-card" role="dialog" aria-modal="true" aria-labelledby="easter-egg-title" aria-describedby="easter-egg-description" tabindex="-1">
+      <button class="easter-egg-close" id="easter-egg-close" type="button" aria-label="Bezárás" title="Bezárás">×</button>
+      <h2 id="easter-egg-title">Találtál valamit 👀</h2>
+      <p id="easter-egg-description">Ezt a QR-kódot csak a bátrak olvassák be.</p>
+      <div class="easter-egg-qr" id="easter-egg-qr" aria-label="Titkos QR-kód"></div>
+      <p class="easter-egg-hint">Nincs visszaút.</p>
+    </section>
+  </div>
+
   <div class="confirm-modal" id="delete-generated-history-modal" hidden>
     <div class="confirm-modal-backdrop" data-generated-modal-close aria-hidden="true"></div>
     <section class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="delete-generated-history-title" aria-describedby="delete-generated-history-description" tabindex="-1">
@@ -2019,6 +2126,11 @@
       const LANGUAGE_STORAGE_KEY = 'qr-studio.language.v1';
 
       const englishTranslations = {
+        "Találtál valamit 👀": "You found something 👀",
+        "Ezt a QR-kódot csak a bátrak olvassák be.": "Only the brave scan this QR code.",
+        "Nincs visszaút.": "There's no going back.",
+        "Bezárás": "Close",
+        "Titkos QR-kód": "Secret QR code",
         "QR Studio - Generálj és olvass be QR-kódokat": "QR Studio - Generate and scan QR codes",
         "Generátor és beolvasó egy helyen": "Generator and scanner in one place",
         "Helyi feldolgozás": "Local processing",
@@ -2522,6 +2634,67 @@
       languageSelect.addEventListener('change', () => setLanguageMode(languageSelect.value));
 
       const brandMark = $('.brand-mark');
+      const easterEggModal = $('#easter-egg-modal');
+      const easterEggCard = easterEggModal.querySelector('.easter-egg-card');
+      const easterEggQr = $('#easter-egg-qr');
+      const easterEggClose = $('#easter-egg-close');
+      const easterEggUrl = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+      let easterEggClicks = 0;
+      let easterEggQrReady = false;
+      let easterEggPreviousFocus = null;
+
+      function renderEasterEggQr() {
+        if (easterEggQrReady || typeof QRCode === 'undefined') return;
+
+        easterEggQr.textContent = '';
+        new QRCode(easterEggQr, {
+          text: easterEggUrl,
+          width: 220,
+          height: 220,
+          colorDark: '#111827',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.M
+        });
+        easterEggQrReady = true;
+      }
+
+      function openEasterEgg() {
+        renderEasterEggQr();
+        if (!easterEggQrReady) return;
+
+        easterEggPreviousFocus = document.activeElement;
+        easterEggModal.hidden = false;
+        document.body.classList.add('modal-open');
+        requestAnimationFrame(() => easterEggCard.focus());
+      }
+
+      function closeEasterEgg() {
+        if (easterEggModal.hidden) return;
+
+        easterEggModal.hidden = true;
+        document.body.classList.remove('modal-open');
+        if (easterEggPreviousFocus instanceof HTMLElement) easterEggPreviousFocus.focus();
+      }
+
+      brandMark.addEventListener('click', () => {
+        easterEggClicks += 1;
+        if (easterEggClicks < 5) return;
+
+        easterEggClicks = 0;
+        openEasterEgg();
+      });
+
+      easterEggClose.addEventListener('click', closeEasterEgg);
+      easterEggModal.addEventListener('click', (event) => {
+        if (event.target.closest('[data-easter-egg-close]')) closeEasterEgg();
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !easterEggModal.hidden) {
+          event.preventDefault();
+          closeEasterEgg();
+        }
+      });
 
       brandMark.addEventListener('pointerdown', (event) => {
         if (event.pointerType === 'mouse') return;
