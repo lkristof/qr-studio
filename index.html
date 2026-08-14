@@ -14,8 +14,13 @@
   <meta name="apple-mobile-web-app-title" content="QR-Studio" />
   <link rel="manifest" href="/qr-studio/site.webmanifest" />
 
+  <!--
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js" defer></script>
+  -->
+
+  <script src="./assets/js/qrcode.1.0.0.js" defer></script>
+  <script src="./assets/js/html5-qrcode.2.3.8.min.js" defer></script>
 
   <style>
     :root {
@@ -77,6 +82,18 @@
     }
 
     * { box-sizing: border-box; }
+
+    .lucide-icon {
+      width: 1em;
+      height: 1em;
+      flex: 0 0 auto;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      pointer-events: none;
+    }
 
     html { scroll-behavior: smooth; }
 
@@ -269,9 +286,7 @@
     }
 
     .tabs {
-      position: sticky;
-      top: max(10px, env(safe-area-inset-top));
-      z-index: 20;
+      position: static;
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 6px;
@@ -286,6 +301,10 @@
     }
 
     .tab {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
       min-height: 46px;
       border: 0;
       border-radius: 12px;
@@ -295,6 +314,8 @@
       cursor: pointer;
       transition: background .18s ease, color .18s ease, transform .18s ease;
     }
+
+    .tab .lucide-icon { width: 18px; height: 18px; }
 
     .tab:active { transform: scale(.985); }
     .tab[aria-selected="true"] { color: white; background: var(--primary-strong); }
@@ -356,6 +377,10 @@
 
     textarea,
     input[type="text"],
+    input[type="url"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="password"],
     input[type="color"],
     select {
       width: 100%;
@@ -367,6 +392,10 @@
 
     textarea,
     input[type="text"],
+    input[type="url"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="password"],
     select { padding: 13px 14px; }
 
     #qr-size,
@@ -419,6 +448,230 @@
 
     .preset:hover { border-color: var(--primary); color: var(--primary); }
 
+    .generator-form {
+      display: grid;
+      gap: 22px;
+    }
+
+    .generator-step {
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: color-mix(in srgb, var(--surface-solid) 70%, transparent);
+    }
+
+    .generator-step-heading {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .generator-step-number {
+      display: grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      flex: 0 0 30px;
+      border-radius: 10px;
+      color: white;
+      background: var(--primary-strong);
+      font-size: .78rem;
+      font-weight: 850;
+      box-shadow: 0 8px 18px color-mix(in srgb, var(--primary) 24%, transparent);
+    }
+
+    .generator-step-copy { min-width: 0; flex: 1 1 auto; }
+    .generator-step-copy h3 { margin: 1px 0 0; font-size: 1rem; letter-spacing: -.015em; }
+    .generator-step-copy p { margin: 5px 0 0; color: var(--muted); font-size: .82rem; line-height: 1.5; }
+
+    .live-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      flex: 0 0 auto;
+      min-height: 30px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      color: var(--success);
+      background: var(--success-soft);
+      font-size: .72rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .live-indicator::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 14%, transparent);
+    }
+
+    .qr-type-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .qr-type-button {
+      display: grid;
+      place-items: center;
+      gap: 8px;
+      min-height: 84px;
+      padding: 12px 8px;
+      border: 1px solid var(--border);
+      border-radius: 15px;
+      color: var(--muted);
+      background: var(--surface-solid);
+      font-size: .79rem;
+      font-weight: 750;
+      line-height: 1.2;
+      text-align: center;
+      cursor: pointer;
+      transition: color .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease;
+    }
+
+    .qr-type-button svg { width: 22px; height: 22px; }
+    .qr-type-button:hover { border-color: color-mix(in srgb, var(--primary) 48%, var(--border)); color: var(--primary); }
+    .qr-type-button:active { transform: scale(.985); }
+    .qr-type-button[aria-selected="true"] {
+      color: var(--primary);
+      border-color: color-mix(in srgb, var(--primary) 55%, transparent);
+      background: var(--primary-soft);
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 18%, transparent);
+    }
+
+    .qr-type-form[hidden] { display: none; }
+
+    .qr-type-form {
+      animation: form-panel-in .18s ease-out;
+    }
+
+    @keyframes form-panel-in {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .field-grid > .field { margin-top: 0; }
+    .field-span-2 { grid-column: 1 / -1; }
+
+    .field-help {
+      margin: 7px 1px 0;
+      color: var(--muted);
+      font-size: .74rem;
+      line-height: 1.45;
+    }
+
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 46px;
+      padding: 11px 13px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      background: color-mix(in srgb, var(--surface-solid) 84%, transparent);
+      cursor: pointer;
+    }
+
+    .check-row input {
+      width: 18px;
+      height: 18px;
+      flex: 0 0 18px;
+      margin: 0;
+      accent-color: var(--primary);
+    }
+
+    .check-row span { font-size: .82rem; font-weight: 700; }
+
+    .color-preset-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .color-preset {
+      position: relative;
+      display: grid;
+      align-content: start;
+      justify-items: stretch;
+      gap: 8px;
+      min-width: 0;
+      padding: 7px;
+      border: 1px solid var(--border);
+      border-radius: 15px;
+      color: var(--muted);
+      background: transparent;
+      font-size: .73rem;
+      font-weight: 750;
+      text-align: center;
+      cursor: pointer;
+      transition: background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease;
+    }
+
+    .color-preset:hover {
+      border-color: color-mix(in srgb, var(--primary) 52%, var(--border));
+      color: var(--primary);
+      background: color-mix(in srgb, var(--primary-soft) 58%, transparent);
+      transform: translateY(-1px);
+    }
+
+    .color-preset[aria-pressed="true"] {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: var(--primary-soft);
+    }
+
+    .color-preset-swatch {
+      width: 100%;
+      height: 50px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      background: linear-gradient(
+        to right,
+        var(--preset-dark, #111827) 0 50%,
+        var(--preset-light, #fff) 50% 100%
+      );
+      background-clip: padding-box;
+    }
+
+    .preview-heading-badges {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .preview-heading-badges .live-indicator {
+      min-height: 28px;
+      padding: 6px 9px;
+    }
+
+    .preview-type-chip {
+      flex: 0 0 auto;
+      padding: 7px 10px;
+      border-radius: 999px;
+      color: var(--primary);
+      background: var(--primary-soft);
+      font-size: .73rem;
+      font-weight: 800;
+    }
+
+    .generator-form textarea { min-height: 118px; }
+    #qr-text { min-height: 150px; }
+    #email-body, #sms-message, #vcard-address { min-height: 96px; }
+
     .options-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -430,19 +683,20 @@
 
     .color-control {
       display: grid;
-      grid-template-columns: 42px minmax(0, 1fr);
+      grid-template-columns: 52px minmax(0, 1fr);
       align-items: center;
-      gap: 10px;
-      padding: 7px 10px 7px 7px;
+      gap: 11px;
+      min-height: 64px;
+      padding: 7px 11px 7px 7px;
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
       background: color-mix(in srgb, var(--surface-solid) 84%, transparent);
     }
 
     input[type="color"] {
-      height: 40px;
+      height: 50px;
       padding: 3px;
-      border-radius: 12px;
+      border-radius: 14px;
       overflow: hidden;
       cursor: pointer;
     }
@@ -547,18 +801,33 @@
       box-shadow: 0 18px 36px rgba(15, 23, 42, 0.14);
     }
 
+    #qrcode[hidden] { display: none !important; }
+
     #qrcode img, #qrcode canvas { display: block; max-width: 100%; height: auto !important; border-radius: 3px; }
 
-    .empty-state { max-width: 240px; color: var(--muted); text-align: center; }
+    .empty-state {
+      display: grid;
+      place-items: center;
+      width: min(100%, 280px);
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .empty-state[hidden] { display: none !important; }
     .empty-state svg { width: 42px; height: 42px; margin-bottom: 12px; color: var(--primary); }
     .empty-state strong { display: block; margin-bottom: 6px; color: var(--text); }
     .empty-state p { margin: 0; font-size: 0.85rem; line-height: 1.5; }
 
     .preview-actions {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 10px;
       margin-top: 14px;
+    }
+
+    .preview-actions .btn {
+      min-width: 0;
+      padding-inline: 12px;
     }
 
     .status {
@@ -770,6 +1039,22 @@
       scroll-margin-top: 18px;
     }
 
+    .generated-history-card {
+      margin-top: 20px;
+    }
+
+    .history-section-heading {
+      align-items: center;
+    }
+
+    .history-clear-button {
+      min-height: 40px;
+      padding-inline: 13px;
+      border-radius: 12px;
+      font-size: .8rem;
+      white-space: nowrap;
+    }
+
     .scan-history-empty {
       min-height: 134px;
       display: grid;
@@ -836,20 +1121,31 @@
     }
 
     .scan-history-actions {
-      display: flex;
-      flex-wrap: nowrap;
-      justify-content: flex-start;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 8px;
       width: 100%;
-      max-width: none;
       margin-top: 12px;
     }
 
     .scan-history-actions .btn {
+      width: 100%;
+      min-width: 0;
       min-height: 38px;
-      padding: 0 12px;
+      padding: 0 10px;
       border-radius: 11px;
       font-size: .8rem;
+      white-space: nowrap;
+    }
+
+    .scan-history-actions .btn svg {
+      flex: 0 0 auto;
+    }
+
+    .scan-history-actions .btn-label {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .security-note {
@@ -956,13 +1252,12 @@
 
     @media (max-width: 860px) {
       .workspace, .scanner-layout { grid-template-columns: 1fr; }
+      .qr-type-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
       .preview-card { position: static; }
       .scan-history-actions {
-        justify-content: stretch;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
       }
       .scan-history-actions .btn {
-        flex: 1 1 0;
-        min-width: 0;
         padding-inline: 8px;
       }
     }
@@ -975,14 +1270,54 @@
       .topbar-actions { gap: 6px; }
       .language-chip { padding-inline: 10px; }
       .hero { margin-top: 8px; }
+      .tab { gap: 6px; font-size: .86rem; }
+      .generator-form { gap: 14px; }
       .options-grid { grid-template-columns: 1fr; }
+      .field-grid { grid-template-columns: 1fr; }
+      .field-span-2 { grid-column: auto; }
+      .qr-type-grid {
+        grid-template-columns: repeat(8, minmax(0, 1fr));
+        gap: 6px;
+      }
+      .qr-type-button {
+        grid-column: span 2;
+        min-height: 60px;
+        gap: 4px;
+        padding: 8px 3px;
+        border-radius: 12px;
+        font-size: .67rem;
+      }
+      .qr-type-button:nth-child(5) { grid-column: 2 / span 2; }
+      .qr-type-button svg { width: 18px; height: 18px; }
+      .color-preset-grid {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .color-preset { grid-column: span 2; padding: 7px; }
+      .color-preset:nth-child(4) { grid-column: 2 / span 2; }
+      .color-preset-swatch { height: 46px; }
+      .generator-step { padding: 14px; }
+      .generator-step-heading { margin-bottom: 14px; }
+      .generator-step-copy p { margin-top: 3px; line-height: 1.4; }
+      .preview-heading { flex-wrap: wrap; gap: 10px; }
+      .preview-heading-badges { width: 100%; justify-content: flex-start; }
       .actions { grid-template-columns: 1fr; }
-      .preview-actions, .scanner-controls { grid-template-columns: 1fr; }
+      .scanner-controls { grid-template-columns: 1fr; }
+      .preview-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .preview-actions .btn { padding-inline: 9px; font-size: .78rem; }
       .qr-stage { min-height: 320px; padding: 18px; }
       .scanner-box, #reader { min-height: 330px; }
       #reader__scan_region { min-height: 280px; }
-      .scan-history-actions { gap: 6px; }
+      .scan-history-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
+      }
       .scan-history-actions .btn { padding-inline: 6px; font-size: .76rem; }
+      .history-section-heading {
+        align-items: stretch;
+        flex-direction: column;
+      }
+      .history-clear-button { width: 100%; }
       .confirm-modal { padding: 14px; }
       .confirm-dialog { border-radius: 20px; }
       .confirm-dialog-actions { grid-template-columns: 1fr; }
@@ -991,6 +1326,12 @@
   </style>
 </head>
 <body>
+  <!--
+    Lucide Icons — Copyright (c) 2022 Lucide Contributors.
+    Distributed under the ISC License; use, copying, modification and distribution
+    are permitted with or without fee when this copyright and permission notice remain.
+    Source project: lucide-icons/lucide
+  -->
   <main class="shell">
     <header class="topbar">
       <div class="brand">
@@ -1044,8 +1385,14 @@
     </section>
 
     <nav class="tabs" aria-label="Funkció választó">
-      <button class="tab" id="generator-tab" type="button" role="tab" aria-selected="true" aria-controls="generator-panel">QR generálása</button>
-      <button class="tab" id="scanner-tab" type="button" role="tab" aria-selected="false" aria-controls="scanner-panel">QR beolvasása</button>
+      <button class="tab" id="generator-tab" type="button" role="tab" aria-selected="true" aria-controls="generator-panel">
+        <svg class="lucide-icon" data-lucide="wand-sparkles" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72"></path><path d="m14 7 3 3"></path><path d="M5 6v4"></path><path d="M19 14v4"></path><path d="M10 2v2"></path><path d="M7 8H3"></path><path d="M21 16h-4"></path><path d="M11 3H9"></path></svg>
+        <span>QR generálása</span>
+      </button>
+      <button class="tab" id="scanner-tab" type="button" role="tab" aria-selected="false" aria-controls="scanner-panel">
+        <svg class="lucide-icon" data-lucide="scan-line" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><path d="M7 12h10"></path></svg>
+        <span>QR beolvasása</span>
+      </button>
     </nav>
 
     <section class="panel" id="generator-panel" role="tabpanel" aria-labelledby="generator-tab">
@@ -1054,85 +1401,288 @@
           <div class="card-body">
             <div class="section-heading">
               <div>
-                <h2>QR-kód tartalma</h2>
-                <p>Adj meg linket, szöveget, telefonszámot vagy e-mail-címet.</p>
+                <h2>QR-kód készítése</h2>
+                <p>Válassz típust, töltsd ki a hozzá tartozó mezőket, majd szabd személyre a megjelenést.</p>
               </div>
               <span class="badge">Generátor</span>
             </div>
 
-            <div class="field">
-              <div class="label-row">
-                <label for="qr-text">Tartalom</label>
-                <span class="counter"><span id="char-count">0</span> karakter</span>
+            <form class="generator-form" id="generator-form" novalidate>
+              <section class="generator-step" aria-labelledby="qr-type-heading">
+                <div class="generator-step-heading">
+                  <span class="generator-step-number" aria-hidden="true">1</span>
+                  <div class="generator-step-copy">
+                    <h3 id="qr-type-heading">Válassz QR-kód típust</h3>
+                    <p>Minden típushoz csak a szükséges mezők jelennek meg.</p>
+                  </div>
+                </div>
+
+                <div class="qr-type-grid" role="tablist" aria-label="QR-kód típusok">
+                  <button class="qr-type-button" id="qr-type-url" type="button" role="tab" aria-selected="true" aria-controls="qr-form-url" tabindex="0" data-qr-type="url">
+                    <svg class="lucide-icon" data-lucide="link" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                    <span>Webcím</span>
+                  </button>
+                  <button class="qr-type-button" id="qr-type-text" type="button" role="tab" aria-selected="false" aria-controls="qr-form-text" tabindex="-1" data-qr-type="text">
+                    <svg class="lucide-icon" data-lucide="text-align-start" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M21 5H3"></path><path d="M15 12H3"></path><path d="M17 19H3"></path></svg>
+                    <span>Szöveg</span>
+                  </button>
+                  <button class="qr-type-button" id="qr-type-wifi" type="button" role="tab" aria-selected="false" aria-controls="qr-form-wifi" tabindex="-1" data-qr-type="wifi">
+                    <svg class="lucide-icon" data-lucide="wifi" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 20h.01"></path><path d="M2 8.82a15 15 0 0 1 20 0"></path><path d="M5 12.859a10 10 0 0 1 14 0"></path><path d="M8.5 16.429a5 5 0 0 1 7 0"></path></svg>
+                    <span>Wi-Fi</span>
+                  </button>
+                  <button class="qr-type-button" id="qr-type-email" type="button" role="tab" aria-selected="false" aria-controls="qr-form-email" tabindex="-1" data-qr-type="email">
+                    <svg class="lucide-icon" data-lucide="mail" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"></path><rect x="2" y="4" width="20" height="16" rx="2"></rect></svg>
+                    <span>E-mail</span>
+                  </button>
+                  <button class="qr-type-button" id="qr-type-phone" type="button" role="tab" aria-selected="false" aria-controls="qr-form-phone" tabindex="-1" data-qr-type="phone">
+                    <svg class="lucide-icon" data-lucide="phone" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"></path></svg>
+                    <span>Telefon</span>
+                  </button>
+                  <button class="qr-type-button" id="qr-type-sms" type="button" role="tab" aria-selected="false" aria-controls="qr-form-sms" tabindex="-1" data-qr-type="sms">
+                    <svg class="lucide-icon" data-lucide="message-square-text" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"></path><path d="M7 11h10"></path><path d="M7 15h6"></path><path d="M7 7h8"></path></svg>
+                    <span>SMS</span>
+                  </button>
+                  <button class="qr-type-button" id="qr-type-vcard" type="button" role="tab" aria-selected="false" aria-controls="qr-form-vcard" tabindex="-1" data-qr-type="vcard">
+                    <svg class="lucide-icon" data-lucide="id-card" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M16 10h2"></path><path d="M16 14h2"></path><path d="M6.17 15a3 3 0 0 1 5.66 0"></path><circle cx="9" cy="11" r="2"></circle><rect x="2" y="5" width="20" height="14" rx="2"></rect></svg>
+                    <span>Névjegy</span>
+                  </button>
+                </div>
+              </section>
+
+              <section class="generator-step" aria-labelledby="qr-content-heading">
+                <div class="generator-step-heading">
+                  <span class="generator-step-number" aria-hidden="true">2</span>
+                  <div class="generator-step-copy">
+                    <h3 id="qr-content-heading">Add meg a tartalmat</h3>
+                    <p>A kiválasztott típusnak megfelelő adat kerül a QR-kódba.</p>
+                  </div>
+                </div>
+
+                <div class="qr-type-form" id="qr-form-url" role="tabpanel" aria-labelledby="qr-type-url" data-qr-panel="url">
+                  <div class="field">
+                    <label for="qr-url">Webcím</label>
+                    <input class="qr-data-field" id="qr-url" type="url" maxlength="1500" autocomplete="url" spellcheck="false" placeholder="https://pelda.hu">
+                    <p class="field-help">A https:// előtagot automatikusan hozzáadjuk, ha lemarad.</p>
+                  </div>
+                </div>
+
+                <div class="qr-type-form" id="qr-form-text" role="tabpanel" aria-labelledby="qr-type-text" data-qr-panel="text" hidden>
+                  <div class="field">
+                    <div class="label-row">
+                      <label for="qr-text">Szöveges tartalom</label>
+                      <span class="counter"><span id="char-count">0</span> karakter</span>
+                    </div>
+                    <textarea class="qr-data-field" id="qr-text" maxlength="3000" autocomplete="off" spellcheck="false" placeholder="Írj be egy üzenetet vagy tetszőleges szöveget"></textarea>
+                  </div>
+                </div>
+
+                <div class="qr-type-form" id="qr-form-wifi" role="tabpanel" aria-labelledby="qr-type-wifi" data-qr-panel="wifi" hidden>
+                  <div class="field-grid">
+                    <div class="field field-span-2">
+                      <label for="wifi-ssid">Hálózat neve (SSID)</label>
+                      <input class="qr-data-field" id="wifi-ssid" type="text" maxlength="120" autocomplete="off" spellcheck="false" placeholder="Például: Otthoni Wi-Fi">
+                    </div>
+                    <div class="field">
+                      <label for="wifi-password">Jelszó</label>
+                      <input class="qr-data-field" id="wifi-password" type="password" maxlength="180" autocomplete="new-password" placeholder="Wi-Fi jelszó">
+                    </div>
+                    <div class="field">
+                      <label for="wifi-security">Biztonság</label>
+                      <select class="qr-data-field" id="wifi-security">
+                        <option value="WPA" selected>WPA / WPA2</option>
+                        <option value="WEP">WEP</option>
+                        <option value="nopass">Nincs jelszó</option>
+                      </select>
+                    </div>
+                    <label class="check-row" for="wifi-hidden">
+                      <input class="qr-data-field" id="wifi-hidden" type="checkbox">
+                      <span>Rejtett hálózat</span>
+                    </label>
+                    <label class="check-row" for="wifi-show-password">
+                      <input id="wifi-show-password" type="checkbox">
+                      <span>Jelszó megjelenítése</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="qr-type-form" id="qr-form-email" role="tabpanel" aria-labelledby="qr-type-email" data-qr-panel="email" hidden>
+                  <div class="field-grid">
+                    <div class="field field-span-2">
+                      <label for="email-address">Címzett e-mail-címe</label>
+                      <input class="qr-data-field" id="email-address" type="email" maxlength="254" autocomplete="email" spellcheck="false" placeholder="nev@pelda.hu">
+                    </div>
+                    <div class="field field-span-2">
+                      <label for="email-subject">Tárgy <span class="hint">(nem kötelező)</span></label>
+                      <input class="qr-data-field" id="email-subject" type="text" maxlength="200" autocomplete="off" placeholder="Az üzenet tárgya">
+                    </div>
+                    <div class="field field-span-2">
+                      <label for="email-body">Üzenet <span class="hint">(nem kötelező)</span></label>
+                      <textarea class="qr-data-field" id="email-body" maxlength="1500" placeholder="Az e-mail előre kitöltött szövege"></textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="qr-type-form" id="qr-form-phone" role="tabpanel" aria-labelledby="qr-type-phone" data-qr-panel="phone" hidden>
+                  <div class="field">
+                    <label for="phone-number">Telefonszám</label>
+                    <input class="qr-data-field" id="phone-number" type="tel" maxlength="60" autocomplete="tel" placeholder="+36 30 123 4567">
+                    <p class="field-help">Nemzetközi formátumban, országkóddal a legbiztosabb.</p>
+                  </div>
+                </div>
+
+                <div class="qr-type-form" id="qr-form-sms" role="tabpanel" aria-labelledby="qr-type-sms" data-qr-panel="sms" hidden>
+                  <div class="field-grid">
+                    <div class="field field-span-2">
+                      <label for="sms-number">Címzett telefonszáma</label>
+                      <input class="qr-data-field" id="sms-number" type="tel" maxlength="60" autocomplete="tel" placeholder="+36 30 123 4567">
+                    </div>
+                    <div class="field field-span-2">
+                      <label for="sms-message">Üzenet <span class="hint">(nem kötelező)</span></label>
+                      <textarea class="qr-data-field" id="sms-message" maxlength="1000" placeholder="Az SMS előre kitöltött szövege"></textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="qr-type-form" id="qr-form-vcard" role="tabpanel" aria-labelledby="qr-type-vcard" data-qr-panel="vcard" hidden>
+                  <div class="field-grid">
+                    <div class="field">
+                      <label for="vcard-name">Teljes név</label>
+                      <input class="qr-data-field" id="vcard-name" type="text" maxlength="160" autocomplete="name" placeholder="Kiss Anna">
+                    </div>
+                    <div class="field">
+                      <label for="vcard-company">Cég <span class="hint">(nem kötelező)</span></label>
+                      <input class="qr-data-field" id="vcard-company" type="text" maxlength="160" autocomplete="organization" placeholder="Példa Kft.">
+                    </div>
+                    <div class="field">
+                      <label for="vcard-title">Beosztás <span class="hint">(nem kötelező)</span></label>
+                      <input class="qr-data-field" id="vcard-title" type="text" maxlength="160" autocomplete="organization-title" placeholder="Projektvezető">
+                    </div>
+                    <div class="field">
+                      <label for="vcard-phone">Telefonszám <span class="hint">(nem kötelező)</span></label>
+                      <input class="qr-data-field" id="vcard-phone" type="tel" maxlength="60" autocomplete="tel" placeholder="+36 30 123 4567">
+                    </div>
+                    <div class="field">
+                      <label for="vcard-email">E-mail <span class="hint">(nem kötelező)</span></label>
+                      <input class="qr-data-field" id="vcard-email" type="email" maxlength="254" autocomplete="email" spellcheck="false" placeholder="nev@pelda.hu">
+                    </div>
+                    <div class="field">
+                      <label for="vcard-url">Weboldal <span class="hint">(nem kötelező)</span></label>
+                      <input class="qr-data-field" id="vcard-url" type="url" maxlength="1500" autocomplete="url" spellcheck="false" placeholder="https://pelda.hu">
+                    </div>
+                    <div class="field field-span-2">
+                      <label for="vcard-address">Cím <span class="hint">(nem kötelező)</span></label>
+                      <textarea class="qr-data-field" id="vcard-address" maxlength="500" autocomplete="street-address" placeholder="Irányítószám, város, utca, házszám"></textarea>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="generator-step" aria-labelledby="qr-style-heading">
+                <div class="generator-step-heading">
+                  <span class="generator-step-number" aria-hidden="true">3</span>
+                  <div class="generator-step-copy">
+                    <h3 id="qr-style-heading">Megjelenés és kimenet</h3>
+                    <p>A módosítások automatikusan megjelennek az előnézetben.</p>
+                  </div>
+                </div>
+
+                <div class="field">
+                  <div class="label-row">
+                    <label>Színpaletta</label>
+                    <span class="hint">Válassz mintát vagy adj meg saját színeket</span>
+                  </div>
+                  <div class="color-preset-grid" aria-label="Színpaletta">
+                    <button class="color-preset" type="button" data-dark="#111827" data-light="#ffffff" aria-pressed="true">
+                      <span class="color-preset-swatch" style="--preset-dark:#111827;--preset-light:#ffffff" aria-hidden="true"></span>
+                      <span>Klasszikus</span>
+                    </button>
+                    <button class="color-preset" type="button" data-dark="#4338ca" data-light="#eef2ff" aria-pressed="false">
+                      <span class="color-preset-swatch" style="--preset-dark:#4338ca;--preset-light:#eef2ff" aria-hidden="true"></span>
+                      <span>Indigó</span>
+                    </button>
+                    <button class="color-preset" type="button" data-dark="#0f172a" data-light="#e0f2fe" aria-pressed="false">
+                      <span class="color-preset-swatch" style="--preset-dark:#0f172a;--preset-light:#e0f2fe" aria-hidden="true"></span>
+                      <span>Óceán</span>
+                    </button>
+                    <button class="color-preset" type="button" data-dark="#065f46" data-light="#ecfdf5" aria-pressed="false">
+                      <span class="color-preset-swatch" style="--preset-dark:#065f46;--preset-light:#ecfdf5" aria-hidden="true"></span>
+                      <span>Erdő</span>
+                    </button>
+                    <button class="color-preset" type="button" data-dark="#7f1d1d" data-light="#fff7ed" aria-pressed="false">
+                      <span class="color-preset-swatch" style="--preset-dark:#7f1d1d;--preset-light:#fff7ed" aria-hidden="true"></span>
+                      <span>Naplemente</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="options-grid">
+                  <label class="color-control" for="dark-color">
+                    <input id="dark-color" type="color" value="#111827">
+                    <span><strong>Kód színe</strong><small id="dark-color-value">#111827</small></span>
+                  </label>
+
+                  <label class="color-control" for="light-color">
+                    <input id="light-color" type="color" value="#ffffff">
+                    <span><strong>Háttér</strong><small id="light-color-value">#FFFFFF</small></span>
+                  </label>
+
+                  <button class="btn btn-secondary" id="reset-style" type="button">
+                    <svg class="lucide-icon" data-lucide="rotate-ccw" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+                    Alaphelyzet
+                  </button>
+                </div>
+
+                <div class="options-grid">
+                  <div class="field">
+                    <label for="qr-size">Méret</label>
+                    <select id="qr-size">
+                      <option value="256">256 px</option>
+                      <option value="384" selected>384 px</option>
+                      <option value="512">512 px</option>
+                      <option value="768">768 px</option>
+                      <option value="1024">1024 px</option>
+                    </select>
+                  </div>
+
+                  <div class="field">
+                    <label for="qr-level">Hibatűrés</label>
+                    <select id="qr-level">
+                      <option value="L">Alacsony</option>
+                      <option value="M" selected>Közepes</option>
+                      <option value="Q">Magas</option>
+                      <option value="H">Legmagasabb</option>
+                    </select>
+                  </div>
+
+                  <div class="field">
+                    <label for="file-name">Fájlnév</label>
+                    <input id="file-name" type="text" value="qr-kod" maxlength="60" autocomplete="off">
+                  </div>
+                </div>
+              </section>
+
+              <div class="actions">
+                <button class="btn btn-secondary" id="clear-button" type="button">
+                  <svg class="lucide-icon" data-lucide="trash-2" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                  <span>Tartalom törlése</span>
+                </button>
               </div>
-              <textarea id="qr-text" maxlength="1500" autocomplete="off" spellcheck="false" placeholder="Például: https://pelda.hu vagy egy rövid üzenet"></textarea>
-              <div class="preset-row" aria-label="Gyors minták">
-                <button class="preset" type="button" data-prefix="https://">Webcím</button>
-                <button class="preset" type="button" data-prefix="mailto:">E-mail</button>
-                <button class="preset" type="button" data-prefix="tel:">Telefon</button>
-                <button class="preset" type="button" data-prefix="WIFI:T:WPA;S:HALOZAT;P:JELSZO;;">Wi-Fi</button>
-              </div>
-            </div>
 
-            <div class="options-grid">
-              <div class="field">
-                <label for="qr-size">Méret</label>
-                <select id="qr-size">
-                  <option value="256">256 px</option>
-                  <option value="384" selected>384 px</option>
-                  <option value="512">512 px</option>
-                  <option value="768">768 px</option>
-                </select>
-              </div>
-
-              <div class="field">
-                <label for="qr-level">Hibatűrés</label>
-                <select id="qr-level">
-                  <option value="L">Alacsony</option>
-                  <option value="M" selected>Közepes</option>
-                  <option value="Q">Magas</option>
-                  <option value="H">Legmagasabb</option>
-                </select>
-              </div>
-
-              <div class="field">
-                <label for="file-name">Fájlnév</label>
-                <input id="file-name" type="text" value="qr-kod" maxlength="60" autocomplete="off">
-              </div>
-            </div>
-
-            <div class="options-grid">
-              <label class="color-control" for="dark-color">
-                <input id="dark-color" type="color" value="#111827">
-                <span><strong>Kód színe</strong><small id="dark-color-value">#111827</small></span>
-              </label>
-
-              <label class="color-control" for="light-color">
-                <input id="light-color" type="color" value="#ffffff">
-                <span><strong>Háttér</strong><small id="light-color-value">#ffffff</small></span>
-              </label>
-
-              <button class="btn btn-secondary" id="reset-style" type="button">Alaphelyzet</button>
-            </div>
-
-            <div class="actions">
-              <button class="btn btn-primary" id="generate-button" type="button">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
-                QR-kód létrehozása
-              </button>
-              <button class="btn btn-secondary" id="clear-button" type="button">Törlés</button>
-            </div>
-
-            <div class="status" id="generator-status" role="status" aria-live="polite"></div>
+              <div class="status" id="generator-status" role="status" aria-live="polite"></div>
+            </form>
           </div>
         </article>
 
         <aside class="card preview-card">
           <div class="card-body">
-            <div class="section-heading">
+            <div class="section-heading preview-heading">
               <div>
                 <h2>Előnézet</h2>
-                <p>A kész kód PNG-képként letölthető.</p>
+                <p>A kész kód PNG- és SVG-formátumban letölthető.</p>
+              </div>
+              <div class="preview-heading-badges">
+                <span class="live-indicator">Élő előnézet</span>
+                <span class="preview-type-chip" id="preview-type-label">Webcím</span>
               </div>
             </div>
 
@@ -1145,21 +1695,50 @@
                   <rect x="13.15" y="13.15" width="8.7" height="8.7" rx="1.85" fill="currentColor" stroke="none"></rect>
                 </svg>
                 <strong>Itt jelenik meg a QR-kód</strong>
-                <p>Írd be a tartalmat, majd nyomd meg a létrehozás gombot.</p>
+                <p>Válassz típust, majd töltsd ki a szükséges mezőket.</p>
               </div>
               <div id="qrcode" hidden aria-label="Elkészült QR-kód"></div>
             </div>
 
             <div class="preview-actions">
               <button class="btn btn-primary" id="download-button" type="button" disabled>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M5 21h14"></path></svg>
-                PNG letöltése
+                <svg class="lucide-icon" data-lucide="download" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 15V3"></path><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="m7 10 5 5 5-5"></path></svg>
+                <span>PNG letöltése</span>
               </button>
-              <button class="btn btn-secondary" id="copy-image-button" type="button" disabled>Másolás</button>
+              <button class="btn btn-secondary" id="download-svg-button" type="button" disabled>
+                <svg class="lucide-icon" data-lucide="download" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 15V3"></path><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="m7 10 5 5 5-5"></path></svg>
+                <span>SVG letöltése</span>
+              </button>
+              <button class="btn btn-secondary" id="copy-image-button" type="button" disabled>
+                <svg class="lucide-icon" data-lucide="copy" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg>
+                <span>Kép másolása</span>
+              </button>
+              <button class="btn btn-secondary" id="copy-value-button" type="button" disabled>
+                <svg class="lucide-icon" data-lucide="copy" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg>
+                <span>Érték másolása</span>
+              </button>
             </div>
           </div>
         </aside>
       </div>
+
+      <article class="card generated-history-card" id="generated-history-card">
+        <div class="card-body">
+          <div class="section-heading history-section-heading">
+            <div>
+              <h2>Generált QR-kódok</h2>
+              <p>A generált kódok ezen a böngészőn megmaradnak, amíg nem törlöd őket.</p>
+            </div>
+            <button class="btn btn-secondary history-clear-button" id="clear-generated-history" type="button" disabled>
+              <svg class="lucide-icon" data-lucide="trash-2" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              <span>Összes törlése</span>
+            </button>
+          </div>
+
+          <div class="scan-history-empty generated-history-empty" id="generated-history-empty" tabindex="-1">Még nincs generált QR-kód.</div>
+          <div class="scan-history generated-history" id="generated-history" role="list" aria-live="polite" aria-label="Generálási előzmények"></div>
+        </div>
+      </article>
     </section>
 
     <section class="panel" id="scanner-panel" role="tabpanel" aria-labelledby="scanner-tab" hidden>
@@ -1202,16 +1781,22 @@
 
             <div class="scanner-controls">
               <button class="btn btn-primary" id="start-camera" type="button">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14.5 4H9.5L8 7H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"></path><circle cx="12" cy="13" r="3"></circle></svg>
-                Kamera indítása
+                <svg class="lucide-icon" data-lucide="camera" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"></path><circle cx="12" cy="13" r="3"></circle></svg>
+                <span>Kamera indítása</span>
               </button>
-              <button class="btn btn-danger" id="stop-camera" type="button" disabled>Kamera leállítása</button>
+              <button class="btn btn-danger" id="stop-camera" type="button" disabled>
+                <svg class="lucide-icon" data-lucide="camera-off" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M14.564 14.558a3 3 0 1 1-4.122-4.121"></path><path d="m2 2 20 20"></path><path d="M20 20H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 .819-.175"></path><path d="M9.695 4.024A2 2 0 0 1 10.004 4h3.993a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v7.344"></path></svg>
+                <span>Kamera leállítása</span>
+              </button>
               <label class="btn btn-secondary upload-label" for="qr-file">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 16V4"></path><path d="m7 9 5-5 5 5"></path><path d="M5 20h14"></path></svg>
-                Kép kiválasztása
+                <svg class="lucide-icon" data-lucide="arrow-up-from-line" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m18 9-6-6-6 6"></path><path d="M12 3v14"></path><path d="M5 21h14"></path></svg>
+                <span>Kép kiválasztása</span>
                 <input id="qr-file" type="file" accept="image/*" aria-label="QR-kódot tartalmazó kép kiválasztása a galériából vagy a fájlok közül">
               </label>
-              <button class="btn btn-secondary" id="clear-result" type="button" disabled>Összes törlése</button>
+              <button class="btn btn-secondary" id="clear-result" type="button" disabled>
+                <svg class="lucide-icon" data-lucide="trash-2" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                <span>Összes törlése</span>
+              </button>
             </div>
 
             <div class="status" id="scanner-status" role="status" aria-live="polite"></div>
@@ -1244,16 +1829,26 @@
     </footer>
   </main>
 
+  <div class="confirm-modal" id="delete-generated-history-modal" hidden>
+    <div class="confirm-modal-backdrop" data-generated-modal-close aria-hidden="true"></div>
+    <section class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="delete-generated-history-title" aria-describedby="delete-generated-history-description" tabindex="-1">
+      <div class="confirm-dialog-icon" aria-hidden="true">
+        <svg class="lucide-icon" data-lucide="trash-2" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+      </div>
+      <h2 id="delete-generated-history-title">Összes generált QR-kód törlése?</h2>
+      <p id="delete-generated-history-description">Biztosan törlöd az összes generált QR-kódot? Ez a művelet nem vonható vissza.</p>
+      <div class="confirm-dialog-actions">
+        <button class="btn btn-secondary" id="cancel-delete-generated-history" type="button">Mégse</button>
+        <button class="btn btn-danger" id="confirm-delete-generated-history" type="button">Összes törlése</button>
+      </div>
+    </section>
+  </div>
+
   <div class="confirm-modal" id="delete-history-modal" hidden>
     <div class="confirm-modal-backdrop" data-modal-close aria-hidden="true"></div>
     <section class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="delete-history-title" aria-describedby="delete-history-description" tabindex="-1">
       <div class="confirm-dialog-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 6h18"></path>
-          <path d="M8 6V4h8v2"></path>
-          <path d="M19 6l-1 14H6L5 6"></path>
-          <path d="M10 11v5M14 11v5"></path>
-        </svg>
+        <svg class="lucide-icon" data-lucide="trash-2" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
       </div>
       <h2 id="delete-history-title">Összes beolvasás törlése?</h2>
       <p id="delete-history-description">Biztosan törlöd az összes beolvasott elemet? Ez a művelet nem vonható vissza.</p>
@@ -1276,8 +1871,31 @@
       const generatorPanel = $('#generator-panel');
       const scannerPanel = $('#scanner-panel');
 
+      const generatorForm = $('#generator-form');
+      const qrTypeButtons = $$('.qr-type-button');
+      const qrTypePanels = $$('.qr-type-form');
+      const qrDataFields = $$('.qr-data-field');
+      const qrUrl = $('#qr-url');
       const qrText = $('#qr-text');
       const charCount = $('#char-count');
+      const wifiSsid = $('#wifi-ssid');
+      const wifiPassword = $('#wifi-password');
+      const wifiSecurity = $('#wifi-security');
+      const wifiHidden = $('#wifi-hidden');
+      const wifiShowPassword = $('#wifi-show-password');
+      const emailAddress = $('#email-address');
+      const emailSubject = $('#email-subject');
+      const emailBody = $('#email-body');
+      const phoneNumber = $('#phone-number');
+      const smsNumber = $('#sms-number');
+      const smsMessage = $('#sms-message');
+      const vcardName = $('#vcard-name');
+      const vcardCompany = $('#vcard-company');
+      const vcardTitle = $('#vcard-title');
+      const vcardPhone = $('#vcard-phone');
+      const vcardEmail = $('#vcard-email');
+      const vcardUrl = $('#vcard-url');
+      const vcardAddress = $('#vcard-address');
       const qrSize = $('#qr-size');
       const qrLevel = $('#qr-level');
       const fileName = $('#file-name');
@@ -1285,15 +1903,26 @@
       const lightColor = $('#light-color');
       const darkColorValue = $('#dark-color-value');
       const lightColorValue = $('#light-color-value');
+      const colorPresetButtons = $$('.color-preset');
       const qrCodeContainer = $('#qrcode');
       const qrEmpty = $('#qr-empty');
       const qrStage = $('#qr-stage');
-      const generateButton = $('#generate-button');
+      const previewTypeLabel = $('#preview-type-label');
       const clearButton = $('#clear-button');
       const resetStyle = $('#reset-style');
       const downloadButton = $('#download-button');
+      const downloadSvgButton = $('#download-svg-button');
       const copyImageButton = $('#copy-image-button');
+      const copyValueButton = $('#copy-value-button');
       const generatorStatus = $('#generator-status');
+      const generatedHistory = $('#generated-history');
+      const generatedHistoryEmpty = $('#generated-history-empty');
+      const clearGeneratedHistoryButton = $('#clear-generated-history');
+      const deleteGeneratedHistoryModal = $('#delete-generated-history-modal');
+      const deleteGeneratedHistoryDialog = deleteGeneratedHistoryModal.querySelector('.confirm-dialog');
+      const cancelDeleteGeneratedHistoryButton = $('#cancel-delete-generated-history');
+      const confirmDeleteGeneratedHistoryButton = $('#confirm-delete-generated-history');
+      let deleteGeneratedHistoryPreviousFocus = null;
 
       const readerId = 'reader';
       const scannerPlaceholder = $('#scanner-placeholder');
@@ -1317,6 +1946,21 @@
       const confirmDeleteHistoryButton = $('#confirm-delete-history');
       let deleteHistoryPreviousFocus = null;
 
+      const QR_TYPE_LABELS = {
+        url: 'Webcím',
+        text: 'Szöveg',
+        wifi: 'Wi-Fi',
+        email: 'E-mail',
+        phone: 'Telefon',
+        sms: 'SMS',
+        vcard: 'Névjegy'
+      };
+
+      let activeQrType = 'url';
+      let qrInstance = null;
+      let liveGenerateTimer = 0;
+      let generatedHistorySequence = 0;
+
       let html5QrCode = null;
       let scannerRunning = false;
       let scanCompleting = false;
@@ -1327,7 +1971,9 @@
       let scanItemSequence = 0;
 
       const SCAN_HISTORY_STORAGE_KEY = 'qr-studio.scan-history.v1';
+      const GENERATED_HISTORY_STORAGE_KEY = 'qr-studio.generated-history.v1';
       const MAX_STORED_SCANS = 100;
+      const MAX_STORED_GENERATED_QRS = 100;
       const LANGUAGE_STORAGE_KEY = 'qr-studio.language.v1';
 
       const englishTranslations = {
@@ -1347,6 +1993,7 @@
         "Webcím": "Website",
         "E-mail": "Email",
         "Telefon": "Phone",
+        "Telefonszám": "Phone number",
         "Wi-Fi": "Wi-Fi",
         "Méret": "Size",
         "Hibatűrés": "Error correction",
@@ -1366,6 +2013,8 @@
         "Írd be a tartalmat, majd nyomd meg a létrehozás gombot.": "Enter the content, then press the create button.",
         "PNG letöltése": "Download PNG",
         "Másolás": "Copy",
+        "Kép másolása": "Copy image",
+        "Érték másolása": "Copy value",
         "QR-kód beolvasása": "Scan QR code",
         "Használd a kamerát, vagy válassz egy képet a készülékről.": "Use the camera or choose an image from your device.",
         "Olvasó": "Scanner",
@@ -1384,6 +2033,17 @@
         "Beolvasott tartalom": "Scanned content",
         "A beolvasások ezen a böngészőn megmaradnak, amíg nem törlöd őket.": "Scans remain stored in this browser until you delete them.",
         "Még nincs beolvasott QR-kód.": "No QR code has been scanned yet.",
+        "Generált QR-kódok": "Generated QR codes",
+        "A generált kódok ezen a böngészőn megmaradnak, amíg nem törlöd őket.": "Generated QR codes remain stored in this browser until you delete them.",
+        "Még nincs generált QR-kód.": "No QR code has been generated yet.",
+        "Generálási előzmények": "Generation history",
+        "Generálva": "Generated",
+        "Visszatöltés": "Load",
+        "Generált QR-kód visszatöltése": "Load generated QR code",
+        "Összes generált QR-kód törlése?": "Delete all generated QR codes?",
+        "Biztosan törlöd az összes generált QR-kódot? Ez a művelet nem vonható vissza.": "Are you sure you want to delete all generated QR codes? This action cannot be undone.",
+        "A kiválasztott generált QR-kód törölve.": "The selected generated QR code was deleted.",
+        "A generált QR-kód visszatöltve.": "The generated QR code was loaded.",
         "Ismeretlen QR-kódnál ellenőrizd a webcímet megnyitás előtt. A beolvasási előzmények csak ezen a készüléken, a böngésző helyi tárhelyén maradnak meg. Az oldal csak a": "For unknown QR codes, verify the address before opening it. Scan history is stored only on this device in the browser's local storage. The page only allows",
         "és": "and",
         "hivatkozásokat engedi megnyitni.": "links to be opened.",
@@ -1434,6 +2094,75 @@
         "A beolvasási előzmények mentése nem sikerült:": "The scan history could not be saved:",
         "A beolvasási előzmények betöltése nem sikerült:": "The scan history could not be loaded:",
         "A beolvasási előzmények törlése nem sikerült:": "The scan history could not be deleted:",
+        "QR-kód készítése": "Create a QR code",
+        "Válassz típust, töltsd ki a hozzá tartozó mezőket, majd szabd személyre a megjelenést.": "Choose a type, fill in its fields, then customize the appearance.",
+        "Válassz QR-kód típust": "Choose a QR code type",
+        "Minden típushoz csak a szükséges mezők jelennek meg.": "Only the fields needed for the selected type are shown.",
+        "QR-kód típusok": "QR code types",
+        "Szöveg": "Text",
+        "SMS": "SMS",
+        "Névjegy": "Contact",
+        "Add meg a tartalmat": "Enter the content",
+        "A kiválasztott típusnak megfelelő adat kerül a QR-kódba.": "The QR code will contain data formatted for the selected type.",
+        "A https:// előtagot automatikusan hozzáadjuk, ha lemarad.": "The https:// prefix is added automatically when omitted.",
+        "Szöveges tartalom": "Text content",
+        "Írj be egy üzenetet vagy tetszőleges szöveget": "Enter a message or any plain text",
+        "Hálózat neve (SSID)": "Network name (SSID)",
+        "Például: Otthoni Wi-Fi": "For example: Home Wi-Fi",
+        "Jelszó": "Password",
+        "Wi-Fi jelszó": "Wi-Fi password",
+        "Biztonság": "Security",
+        "Nincs jelszó": "No password",
+        "Rejtett hálózat": "Hidden network",
+        "Jelszó megjelenítése": "Show password",
+        "Címzett e-mail-címe": "Recipient email address",
+        "nev@pelda.hu": "name@example.com",
+        "Tárgy": "Subject",
+        "(nem kötelező)": "(optional)",
+        "Az üzenet tárgya": "Message subject",
+        "Üzenet": "Message",
+        "Az e-mail előre kitöltött szövege": "Prefilled email message",
+        "Nemzetközi formátumban, országkóddal a legbiztosabb.": "International format with a country code works most reliably.",
+        "Címzett telefonszáma": "Recipient phone number",
+        "Az SMS előre kitöltött szövege": "Prefilled SMS message",
+        "Teljes név": "Full name",
+        "Kiss Anna": "Anna Smith",
+        "Cég": "Company",
+        "Példa Kft.": "Example Ltd.",
+        "Beosztás": "Job title",
+        "Projektvezető": "Project manager",
+        "Weboldal": "Website",
+        "Cím": "Address",
+        "Irányítószám, város, utca, házszám": "Postal code, city, street, number",
+        "Megjelenés és kimenet": "Appearance and output",
+        "A módosítások automatikusan megjelennek az előnézetben.": "Changes appear in the preview automatically.",
+        "Élő előnézet": "Live preview",
+        "Színpaletta": "Color palette",
+        "Válassz mintát vagy adj meg saját színeket": "Choose a preset or enter custom colors",
+        "Klasszikus": "Classic",
+        "Indigó": "Indigo",
+        "Óceán": "Ocean",
+        "Erdő": "Forest",
+        "Naplemente": "Sunset",
+        "Tartalom törlése": "Clear content",
+        "A kész kód PNG- és SVG-formátumban letölthető.": "The generated code can be downloaded as PNG or SVG.",
+        "Válassz típust, majd töltsd ki a szükséges mezőket.": "Choose a type, then fill in the required fields.",
+        "SVG letöltése": "Download SVG",
+        "A QR-kód értéke a vágólapra került.": "The QR code value was copied to the clipboard.",
+        "A QR-kód értékének másolását a böngésző nem engedélyezte.": "The browser did not allow the QR code value to be copied.",
+        "Töltsd ki a kiválasztott QR-típus kötelező mezőit.": "Fill in the required fields for the selected QR type.",
+        "Adj meg egy webcímet.": "Enter a website address.",
+        "Érvényes webcímet adj meg.": "Enter a valid website address.",
+        "Adj meg szöveget a QR-kód létrehozásához.": "Enter text to create the QR code.",
+        "Add meg a Wi-Fi hálózat nevét.": "Enter the Wi-Fi network name.",
+        "Add meg a Wi-Fi jelszavát, vagy válaszd a Nincs jelszó lehetőséget.": "Enter the Wi-Fi password or choose No password.",
+        "Adj meg érvényes e-mail-címet.": "Enter a valid email address.",
+        "Adj meg telefonszámot.": "Enter a phone number.",
+        "Add meg az SMS címzettjének telefonszámát.": "Enter the SMS recipient's phone number.",
+        "Adj meg legalább egy nevet a névjegyhez.": "Enter at least a name for the contact.",
+        "Az SVG-fájl letöltése elindult.": "The SVG download has started.",
+        "SMS-üzenet": "SMS message",
+        "névjegy": "contact",
         "Modern, mobilbarát QR-kód generátor és olvasó.": "Modern, mobile-friendly QR code generator and scanner."
 };
       const staticTextBindings = [];
@@ -1519,9 +2248,43 @@
               delete: 'Törlés'
             };
             const label = labels[button.dataset.action];
-            if (label) button.textContent = translate(label);
+            const labelElement = button.querySelector('.btn-label');
+            if (label && labelElement) labelElement.textContent = translate(label);
+            else if (label) button.textContent = translate(label);
             if (button.dataset.action === 'generate-qr') {
               const accessibleLabel = translate('QR-kód generálása ebből a tartalomból');
+              button.setAttribute('aria-label', accessibleLabel);
+              button.title = accessibleLabel;
+            }
+          });
+        });
+      }
+
+      function refreshGeneratedHistoryLanguage() {
+        generatedHistory.querySelectorAll('.generated-history-item').forEach((item) => {
+          const value = item.generatedValue || '';
+          const generatedAt = new Date(item.dataset.generatedAt);
+          const type = item.dataset.qrType || classifyResult(value).type || 'text';
+          const typeChip = item.querySelector('[data-role="generated-type"]');
+          const timeChip = item.querySelector('[data-role="generated-time"]');
+
+          if (typeChip) typeChip.textContent = `${translate('Típus')}: ${translate(QR_TYPE_LABELS[type] || 'Szöveg')}`;
+          if (timeChip && !Number.isNaN(generatedAt.getTime())) {
+            timeChip.textContent = `${translate('Generálva')}: ${formatScanDate(generatedAt)}`;
+          }
+
+          item.querySelectorAll('button[data-action]').forEach((button) => {
+            const labels = {
+              'load-generated': 'Visszatöltés',
+              copy: 'Másolás',
+              open: 'Megnyitás',
+              delete: 'Törlés'
+            };
+            const label = labels[button.dataset.action];
+            const labelElement = button.querySelector('.btn-label');
+            if (label && labelElement) labelElement.textContent = translate(label);
+            if (button.dataset.action === 'load-generated') {
+              const accessibleLabel = translate('Generált QR-kód visszatöltése');
               button.setAttribute('aria-label', accessibleLabel);
               button.title = accessibleLabel;
             }
@@ -1545,10 +2308,12 @@
         if (description) description.setAttribute('content', translate('Modern, mobilbarát QR-kód generátor és olvasó.'));
         languageSelect.value = languageMode;
         languageCurrent.textContent = languageMode.toUpperCase();
+        refreshGeneratorLanguage();
         document.querySelectorAll('.status[data-message-key]').forEach((element) => {
           element.textContent = translate(element.dataset.messageKey);
         });
         refreshScanHistoryLanguage();
+        refreshGeneratedHistoryLanguage();
       }
 
       function setLanguageMode(mode, persist = true) {
@@ -1724,53 +2489,252 @@
         }
       });
 
-      qrText.addEventListener('input', () => {
-        charCount.textContent = String(qrText.value.length);
-      });
+      function refreshGeneratorLanguage() {
+        if (previewTypeLabel) {
+          previewTypeLabel.textContent = translate(QR_TYPE_LABELS[activeQrType] || 'Webcím');
+        }
+      }
 
-      $$('.preset').forEach((button) => {
-        button.addEventListener('click', () => {
-          const prefix = button.dataset.prefix || '';
-          qrText.value = prefix;
-          charCount.textContent = String(qrText.value.length);
-          qrText.focus();
-          qrText.setSelectionRange(prefix.length, prefix.length);
+      function selectQrType(type, { focus = false, generate = true } = {}) {
+        if (!QR_TYPE_LABELS[type]) return;
+        activeQrType = type;
+
+        qrTypeButtons.forEach((button) => {
+          const selected = button.dataset.qrType === type;
+          button.setAttribute('aria-selected', String(selected));
+          button.tabIndex = selected ? 0 : -1;
+        });
+
+        qrTypePanels.forEach((panel) => {
+          panel.hidden = panel.dataset.qrPanel !== type;
+        });
+
+        refreshGeneratorLanguage();
+        hideStatus(generatorStatus);
+
+        if (focus) {
+          const firstField = document.querySelector(`[data-qr-panel="${type}"] .qr-data-field`);
+          if (firstField) window.requestAnimationFrame(() => firstField.focus());
+        }
+
+        if (generate) scheduleLiveGeneration();
+      }
+
+      qrTypeButtons.forEach((button, index) => {
+        button.addEventListener('click', () => selectQrType(button.dataset.qrType, { focus: true }));
+        button.addEventListener('keydown', (event) => {
+          if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return;
+          event.preventDefault();
+          let nextIndex = index;
+          if (event.key === 'Home') nextIndex = 0;
+          else if (event.key === 'End') nextIndex = qrTypeButtons.length - 1;
+          else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') nextIndex = (index - 1 + qrTypeButtons.length) % qrTypeButtons.length;
+          else nextIndex = (index + 1) % qrTypeButtons.length;
+          const nextButton = qrTypeButtons[nextIndex];
+          selectQrType(nextButton.dataset.qrType);
+          nextButton.focus();
         });
       });
 
-      darkColor.addEventListener('input', () => { darkColorValue.textContent = darkColor.value.toUpperCase(); });
-      lightColor.addEventListener('input', () => { lightColorValue.textContent = lightColor.value.toUpperCase(); });
+      function updateCharacterCount() {
+        charCount.textContent = String(qrText.value.length);
+      }
+
+      function updateColorLabels() {
+        darkColorValue.textContent = darkColor.value.toUpperCase();
+        lightColorValue.textContent = lightColor.value.toUpperCase();
+      }
+
+      function syncColorPresetState() {
+        const selectedDark = darkColor.value.toLowerCase();
+        const selectedLight = lightColor.value.toLowerCase();
+        colorPresetButtons.forEach((button) => {
+          const matches = button.dataset.dark.toLowerCase() === selectedDark && button.dataset.light.toLowerCase() === selectedLight;
+          button.setAttribute('aria-pressed', String(matches));
+        });
+      }
+
+      colorPresetButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          darkColor.value = button.dataset.dark;
+          lightColor.value = button.dataset.light;
+          updateColorLabels();
+          syncColorPresetState();
+          hideStatus(generatorStatus);
+          scheduleLiveGeneration();
+        });
+      });
+
+      darkColor.addEventListener('input', () => {
+        updateColorLabels();
+        syncColorPresetState();
+        scheduleLiveGeneration();
+      });
+
+      lightColor.addEventListener('input', () => {
+        updateColorLabels();
+        syncColorPresetState();
+        scheduleLiveGeneration();
+      });
+
+      wifiShowPassword.addEventListener('change', () => {
+        wifiPassword.type = wifiShowPassword.checked ? 'text' : 'password';
+      });
+
+      wifiSecurity.addEventListener('change', () => {
+        const openNetwork = wifiSecurity.value === 'nopass';
+        wifiPassword.disabled = openNetwork;
+        if (openNetwork) wifiPassword.value = '';
+        scheduleLiveGeneration();
+      });
 
       resetStyle.addEventListener('click', () => {
         qrSize.value = '384';
         qrLevel.value = 'M';
         darkColor.value = '#111827';
         lightColor.value = '#ffffff';
-        darkColorValue.textContent = '#111827';
-        lightColorValue.textContent = '#FFFFFF';
+        updateColorLabels();
+        syncColorPresetState();
         hideStatus(generatorStatus);
+        scheduleLiveGeneration();
       });
 
-      function generateQrCode() {
-        hideStatus(generatorStatus);
-        const text = qrText.value.trim();
+      function normalizeWebsiteUrl(value) {
+        const trimmed = value.trim();
+        if (!trimmed) return '';
+        const candidate = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+        try {
+          const parsed = new URL(candidate);
+          return parsed.hostname ? parsed.href : '';
+        } catch (error) {
+          return '';
+        }
+      }
 
-        if (!text) {
-          showStatus(generatorStatus, 'Adj meg egy linket vagy szöveget a QR-kód létrehozásához.', 'error');
-          qrText.focus();
-          return;
+      function escapeWifiValue(value) {
+        return value.replace(/([\\;,:"])/g, '\\$1');
+      }
+
+      function escapeVcardValue(value) {
+        return value
+          .replace(/\\/g, '\\\\')
+          .replace(/\r?\n/g, '\\n')
+          .replace(/;/g, '\\;')
+          .replace(/,/g, '\\,');
+      }
+
+      function buildQrPayload() {
+        if (activeQrType === 'url') {
+          const rawUrl = qrUrl.value.trim();
+          if (!rawUrl) return { text: '', focus: qrUrl, message: 'Adj meg egy webcímet.' };
+          const normalizedUrl = normalizeWebsiteUrl(rawUrl);
+          if (!normalizedUrl) return { text: '', focus: qrUrl, message: 'Érvényes webcímet adj meg.' };
+          return { text: normalizedUrl, focus: qrUrl };
+        }
+
+        if (activeQrType === 'text') {
+          const value = qrText.value.trim();
+          if (!value) return { text: '', focus: qrText, message: 'Adj meg szöveget a QR-kód létrehozásához.' };
+          return { text: value, focus: qrText };
+        }
+
+        if (activeQrType === 'wifi') {
+          const ssid = wifiSsid.value.trim();
+          if (!ssid) return { text: '', focus: wifiSsid, message: 'Add meg a Wi-Fi hálózat nevét.' };
+          const security = wifiSecurity.value;
+          const password = wifiPassword.value;
+          if (security !== 'nopass' && !password) {
+            return { text: '', focus: wifiPassword, message: 'Add meg a Wi-Fi jelszavát, vagy válaszd a Nincs jelszó lehetőséget.' };
+          }
+          const parts = [`WIFI:T:${security}`, `S:${escapeWifiValue(ssid)}`];
+          if (security !== 'nopass') parts.push(`P:${escapeWifiValue(password)}`);
+          parts.push(`H:${wifiHidden.checked ? 'true' : 'false'}`);
+          return { text: `${parts.join(';')};;`, focus: wifiSsid };
+        }
+
+        if (activeQrType === 'email') {
+          const address = emailAddress.value.trim();
+          if (!address || !emailAddress.checkValidity()) {
+            return { text: '', focus: emailAddress, message: 'Adj meg érvényes e-mail-címet.' };
+          }
+          const params = new URLSearchParams();
+          if (emailSubject.value.trim()) params.set('subject', emailSubject.value.trim());
+          if (emailBody.value.trim()) params.set('body', emailBody.value.trim());
+          const query = params.toString();
+          return { text: `mailto:${address}${query ? `?${query}` : ''}`, focus: emailAddress };
+        }
+
+        if (activeQrType === 'phone') {
+          const number = phoneNumber.value.trim();
+          if (!number) return { text: '', focus: phoneNumber, message: 'Adj meg telefonszámot.' };
+          return { text: `tel:${number.replace(/\s+/g, '')}`, focus: phoneNumber };
+        }
+
+        if (activeQrType === 'sms') {
+          const number = smsNumber.value.trim();
+          if (!number) return { text: '', focus: smsNumber, message: 'Add meg az SMS címzettjének telefonszámát.' };
+          return { text: `SMSTO:${number.replace(/\s+/g, '')}:${smsMessage.value.trim()}`, focus: smsNumber };
+        }
+
+        if (activeQrType === 'vcard') {
+          const name = vcardName.value.trim();
+          if (!name) return { text: '', focus: vcardName, message: 'Adj meg legalább egy nevet a névjegyhez.' };
+          const lines = ['BEGIN:VCARD', 'VERSION:3.0', `FN:${escapeVcardValue(name)}`];
+          if (vcardCompany.value.trim()) lines.push(`ORG:${escapeVcardValue(vcardCompany.value.trim())}`);
+          if (vcardTitle.value.trim()) lines.push(`TITLE:${escapeVcardValue(vcardTitle.value.trim())}`);
+          if (vcardPhone.value.trim()) lines.push(`TEL:${escapeVcardValue(vcardPhone.value.trim())}`);
+          if (vcardEmail.value.trim()) lines.push(`EMAIL:${escapeVcardValue(vcardEmail.value.trim())}`);
+          const website = normalizeWebsiteUrl(vcardUrl.value);
+          if (website) lines.push(`URL:${escapeVcardValue(website)}`);
+          if (vcardAddress.value.trim()) lines.push(`ADR:;;${escapeVcardValue(vcardAddress.value.trim())};;;;`);
+          lines.push('END:VCARD');
+          return { text: lines.join('\n'), focus: vcardName };
+        }
+
+        return { text: '', focus: null, message: 'Töltsd ki a kiválasztott QR-típus kötelező mezőit.' };
+      }
+
+      function resetQrPreview() {
+        qrCodeContainer.innerHTML = '';
+        qrCodeContainer.hidden = true;
+        qrEmpty.hidden = false;
+        downloadButton.disabled = true;
+        downloadSvgButton.disabled = true;
+        copyImageButton.disabled = true;
+        copyValueButton.disabled = true;
+        qrInstance = null;
+      }
+
+      function scheduleLiveGeneration() {
+        window.clearTimeout(liveGenerateTimer);
+        liveGenerateTimer = window.setTimeout(() => generateQrCode({ silent: true }), 220);
+      }
+
+      function generateQrCode({ silent = false } = {}) {
+        window.clearTimeout(liveGenerateTimer);
+        const payload = buildQrPayload();
+
+        if (!payload.text) {
+          resetQrPreview();
+          if (!silent) {
+            showStatus(generatorStatus, payload.message || 'Töltsd ki a kiválasztott QR-típus kötelező mezőit.', 'error');
+            if (payload.focus) payload.focus.focus();
+          } else {
+            hideStatus(generatorStatus);
+          }
+          return false;
         }
 
         if (typeof QRCode === 'undefined') {
           showStatus(generatorStatus, 'A QR-generáló modul nem töltődött be. Ellenőrizd az internetkapcsolatot, majd frissítsd az oldalt.', 'error');
-          return;
+          return false;
         }
 
         try {
           qrCodeContainer.innerHTML = '';
           const size = Number.parseInt(qrSize.value, 10);
-          new QRCode(qrCodeContainer, {
-            text,
+          qrInstance = new QRCode(qrCodeContainer, {
+            text: payload.text,
             width: size,
             height: size,
             colorDark: darkColor.value,
@@ -1781,29 +2745,58 @@
           qrEmpty.hidden = true;
           qrCodeContainer.hidden = false;
           downloadButton.disabled = false;
+          downloadSvgButton.disabled = false;
           copyImageButton.disabled = false;
-          showStatus(generatorStatus, 'A QR-kód elkészült.', 'success');
+          copyValueButton.disabled = false;
+          if (silent) hideStatus(generatorStatus);
+          else showStatus(generatorStatus, 'A QR-kód elkészült.', 'success');
+          return true;
         } catch (error) {
           console.error(error);
+          resetQrPreview();
           showStatus(generatorStatus, 'A tartalom túl hosszú vagy nem alakítható QR-kóddá. Rövidítsd le, vagy válassz alacsonyabb hibatűrést.', 'error');
+          return false;
         }
       }
 
-      generateButton.addEventListener('click', generateQrCode);
-      qrText.addEventListener('keydown', (event) => {
-        if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') generateQrCode();
+      generatorForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        generateQrCode();
+      });
+
+      generatorForm.addEventListener('input', (event) => {
+        if (event.target === qrText) updateCharacterCount();
+        if (event.target.classList.contains('qr-data-field')) scheduleLiveGeneration();
+      });
+
+      generatorForm.addEventListener('change', (event) => {
+        if (event.target.classList.contains('qr-data-field') || event.target === qrSize || event.target === qrLevel) {
+          scheduleLiveGeneration();
+        }
+      });
+
+      generatorForm.addEventListener('keydown', (event) => {
+        if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+          event.preventDefault();
+          generateQrCode();
+        }
       });
 
       clearButton.addEventListener('click', () => {
-        qrText.value = '';
-        charCount.textContent = '0';
-        qrCodeContainer.innerHTML = '';
-        qrCodeContainer.hidden = true;
-        qrEmpty.hidden = false;
-        downloadButton.disabled = true;
-        copyImageButton.disabled = true;
+        qrTypePanels.forEach((panel) => {
+          panel.querySelectorAll('input, textarea, select').forEach((field) => {
+            if (field.type === 'checkbox') field.checked = false;
+            else if (field.tagName === 'SELECT') field.selectedIndex = 0;
+            else field.value = '';
+          });
+        });
+        wifiPassword.disabled = false;
+        wifiPassword.type = 'password';
+        wifiShowPassword.checked = false;
+        updateCharacterCount();
+        selectQrType('url', { focus: true, generate: false });
+        resetQrPreview();
         hideStatus(generatorStatus);
-        qrText.focus();
       });
 
       function getQrCanvas() {
@@ -1830,6 +2823,7 @@
       downloadButton.addEventListener('click', () => {
         const canvas = getQrCanvas();
         if (!canvas) return;
+        saveCurrentGeneratedQrToHistory();
         const link = document.createElement('a');
         link.download = `${sanitizedFileName()}.png`;
         link.href = canvas.toDataURL('image/png');
@@ -1837,9 +2831,44 @@
         showStatus(generatorStatus, 'A PNG-fájl letöltése elindult.', 'success');
       });
 
+      function createQrSvg() {
+        const model = qrInstance && qrInstance._oQRCode;
+        if (!model || typeof model.getModuleCount !== 'function' || typeof model.isDark !== 'function') return '';
+
+        const moduleCount = model.getModuleCount();
+        const margin = 4;
+        const totalSize = moduleCount + margin * 2;
+        const pathParts = [];
+
+        for (let row = 0; row < moduleCount; row += 1) {
+          for (let column = 0; column < moduleCount; column += 1) {
+            if (model.isDark(row, column)) {
+              pathParts.push(`M${column + margin} ${row + margin}h1v1h-1z`);
+            }
+          }
+        }
+
+        return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${totalSize} ${totalSize}" shape-rendering="crispEdges"><rect width="${totalSize}" height="${totalSize}" fill="${lightColor.value}"/><path d="${pathParts.join('')}" fill="${darkColor.value}"/></svg>`;
+      }
+
+      downloadSvgButton.addEventListener('click', () => {
+        const svg = createQrSvg();
+        if (!svg) return;
+        saveCurrentGeneratedQrToHistory();
+        const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = `${sanitizedFileName()}.svg`;
+        link.href = url;
+        link.click();
+        window.setTimeout(() => URL.revokeObjectURL(url), 0);
+        showStatus(generatorStatus, 'Az SVG-fájl letöltése elindult.', 'success');
+      });
+
       copyImageButton.addEventListener('click', async () => {
         const canvas = getQrCanvas();
         if (!canvas) return;
+        saveCurrentGeneratedQrToHistory();
 
         if (!navigator.clipboard || typeof ClipboardItem === 'undefined') {
           showStatus(generatorStatus, 'A böngésző nem támogatja a kép közvetlen másolását. Használd a PNG letöltése gombot.', 'info');
@@ -1856,13 +2885,224 @@
         }
       });
 
+      copyValueButton.addEventListener('click', async () => {
+        const payload = buildQrPayload();
+        if (!payload.text) return;
+        saveCurrentGeneratedQrToHistory();
+
+        try {
+          await copyTextToClipboard(payload.text);
+          showStatus(generatorStatus, 'A QR-kód értéke a vágólapra került.', 'success');
+        } catch (error) {
+          console.error(error);
+          showStatus(generatorStatus, 'A QR-kód értékének másolását a böngésző nem engedélyezte.', 'error');
+        }
+      });
+
       function classifyResult(value) {
         const trimmed = value.trim();
-        if (/^https?:\/\//i.test(trimmed)) return { label: translate('webcím'), openable: true };
-        if (/^mailto:/i.test(trimmed)) return { label: translate('e-mail'), openable: true };
-        if (/^tel:/i.test(trimmed)) return { label: translate('telefonszám'), openable: true };
-        if (/^WIFI:/i.test(trimmed)) return { label: translate('Wi-Fi beállítás'), openable: false };
-        return { label: translate('szöveg'), openable: false };
+        if (/^https?:\/\//i.test(trimmed)) return { type: 'url', label: translate('webcím'), openable: true };
+        if (/^mailto:/i.test(trimmed)) return { type: 'email', label: translate('e-mail'), openable: true };
+        if (/^tel:/i.test(trimmed)) return { type: 'phone', label: translate('telefonszám'), openable: true };
+        if (/^(?:SMSTO:|sms:)/i.test(trimmed)) return { type: 'sms', label: translate('SMS-üzenet'), openable: false };
+        if (/^WIFI:/i.test(trimmed)) return { type: 'wifi', label: translate('Wi-Fi beállítás'), openable: false };
+        if (/^BEGIN:VCARD/i.test(trimmed)) return { type: 'vcard', label: translate('névjegy'), openable: false };
+        return { type: 'text', label: translate('szöveg'), openable: false };
+      }
+
+      function unescapeQrFieldValue(value) {
+        return value.replace(/\\([\\;,:"])/g, '$1');
+      }
+
+      function splitEscapedQrFields(value, separator = ';') {
+        const fields = [];
+        let current = '';
+        let escaped = false;
+
+        for (const character of value) {
+          if (escaped) {
+            current += `\\${character}`;
+            escaped = false;
+            continue;
+          }
+          if (character === '\\') {
+            escaped = true;
+            continue;
+          }
+          if (character === separator) {
+            fields.push(current);
+            current = '';
+            continue;
+          }
+          current += character;
+        }
+
+        if (escaped) current += '\\';
+        fields.push(current);
+        return fields;
+      }
+
+      function parseWifiQrValue(value) {
+        const body = value.trim().replace(/^WIFI:/i, '').replace(/;;$/, '');
+        const result = { security: 'WPA', ssid: '', password: '', hidden: false };
+
+        splitEscapedQrFields(body).forEach((field) => {
+          const separatorIndex = field.indexOf(':');
+          if (separatorIndex < 0) return;
+          const key = field.slice(0, separatorIndex).toUpperCase();
+          const fieldValue = unescapeQrFieldValue(field.slice(separatorIndex + 1));
+          if (key === 'T') result.security = fieldValue || 'nopass';
+          if (key === 'S') result.ssid = fieldValue;
+          if (key === 'P') result.password = fieldValue;
+          if (key === 'H') result.hidden = /^(?:true|1|yes)$/i.test(fieldValue);
+        });
+
+        const supportedSecurity = ['WPA', 'WEP', 'nopass'];
+        const securityMatch = supportedSecurity.find((option) => option.toLowerCase() === String(result.security).toLowerCase());
+        result.security = securityMatch || 'WPA';
+        return result;
+      }
+
+      function parseEmailQrValue(value) {
+        const raw = value.trim().replace(/^mailto:/i, '');
+        const questionMark = raw.indexOf('?');
+        const rawAddress = questionMark >= 0 ? raw.slice(0, questionMark) : raw;
+        const rawQuery = questionMark >= 0 ? raw.slice(questionMark + 1) : '';
+        let address = rawAddress;
+        try { address = decodeURIComponent(rawAddress); } catch (error) { /* Keep original. */ }
+        const params = new URLSearchParams(rawQuery);
+        return {
+          address,
+          subject: params.get('subject') || '',
+          body: params.get('body') || ''
+        };
+      }
+
+      function parseSmsQrValue(value) {
+        const trimmed = value.trim();
+        if (/^SMSTO:/i.test(trimmed)) {
+          const body = trimmed.replace(/^SMSTO:/i, '');
+          const separatorIndex = body.indexOf(':');
+          return {
+            number: separatorIndex >= 0 ? body.slice(0, separatorIndex) : body,
+            message: separatorIndex >= 0 ? body.slice(separatorIndex + 1) : ''
+          };
+        }
+
+        const raw = trimmed.replace(/^sms:/i, '');
+        const questionMark = raw.indexOf('?');
+        const number = questionMark >= 0 ? raw.slice(0, questionMark) : raw;
+        const params = new URLSearchParams(questionMark >= 0 ? raw.slice(questionMark + 1) : '');
+        return { number, message: params.get('body') || '' };
+      }
+
+      function unescapeVcardValue(value) {
+        return value
+          .replace(/\\n/gi, '\n')
+          .replace(/\\,/g, ',')
+          .replace(/\\;/g, ';')
+          .replace(/\\\\/g, '\\');
+      }
+
+      function parseVcardQrValue(value) {
+        const unfolded = value.trim().replace(/\r?\n[ \t]/g, '');
+        const result = { name: '', company: '', title: '', phone: '', email: '', url: '', address: '' };
+
+        unfolded.split(/\r?\n/).forEach((line) => {
+          const separatorIndex = line.indexOf(':');
+          if (separatorIndex < 0) return;
+          const property = line.slice(0, separatorIndex).split(';')[0].toUpperCase();
+          const fieldValue = unescapeVcardValue(line.slice(separatorIndex + 1));
+
+          if (property === 'FN' && !result.name) result.name = fieldValue;
+          else if (property === 'N' && !result.name) {
+            const parts = splitEscapedQrFields(line.slice(separatorIndex + 1), ';').map(unescapeVcardValue);
+            result.name = [parts[1], parts[0]].filter(Boolean).join(' ').trim();
+          } else if (property === 'ORG' && !result.company) result.company = fieldValue.replace(/;/g, ' ');
+          else if (property === 'TITLE' && !result.title) result.title = fieldValue;
+          else if (property === 'TEL' && !result.phone) result.phone = fieldValue;
+          else if (property === 'EMAIL' && !result.email) result.email = fieldValue;
+          else if (property === 'URL' && !result.url) result.url = fieldValue;
+          else if (property === 'ADR' && !result.address) {
+            const parts = splitEscapedQrFields(line.slice(separatorIndex + 1), ';').map(unescapeVcardValue).filter(Boolean);
+            result.address = parts.join(', ');
+          }
+        });
+
+        return result;
+      }
+
+      function populateGeneratorFromScannedValue(value, preferredType = '') {
+        const trimmed = value.trim();
+        const classification = classifyResult(trimmed);
+        const type = QR_TYPE_LABELS[preferredType] ? preferredType : (classification.type || 'text');
+        selectQrType(type, { generate: false });
+
+        if (type === 'url') {
+          qrUrl.value = trimmed;
+        } else if (type === 'email') {
+          const email = parseEmailQrValue(trimmed);
+          emailAddress.value = email.address;
+          emailSubject.value = email.subject;
+          emailBody.value = email.body;
+        } else if (type === 'phone') {
+          phoneNumber.value = trimmed.replace(/^tel:/i, '');
+        } else if (type === 'sms') {
+          const sms = parseSmsQrValue(trimmed);
+          smsNumber.value = sms.number;
+          smsMessage.value = sms.message;
+        } else if (type === 'wifi') {
+          const wifi = parseWifiQrValue(trimmed);
+          wifiSsid.value = wifi.ssid;
+          wifiSecurity.value = wifi.security;
+          wifiPassword.value = wifi.security === 'nopass' ? '' : wifi.password;
+          wifiPassword.disabled = wifi.security === 'nopass';
+          wifiHidden.checked = wifi.hidden;
+        } else if (type === 'vcard') {
+          const vcard = parseVcardQrValue(trimmed);
+          vcardName.value = vcard.name;
+          vcardCompany.value = vcard.company;
+          vcardTitle.value = vcard.title;
+          vcardPhone.value = vcard.phone;
+          vcardEmail.value = vcard.email;
+          vcardUrl.value = vcard.url;
+          vcardAddress.value = vcard.address;
+        } else {
+          qrText.value = value;
+          updateCharacterCount();
+        }
+
+        hideStatus(generatorStatus);
+        return type;
+      }
+
+      const embeddedLucideIconMarkup = Object.freeze({
+        'plus': `<path d="M5 12h14"></path><path d="M12 5v14"></path>`,
+        'copy': `<rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>`,
+        'qr-code': `<rect width="5" height="5" x="3" y="3" rx="1"></rect><rect width="5" height="5" x="16" y="3" rx="1"></rect><rect width="5" height="5" x="3" y="16" rx="1"></rect><path d="M21 16h-3a2 2 0 0 0-2 2v3"></path><path d="M21 21v.01"></path><path d="M12 7v3a2 2 0 0 1-2 2H7"></path><path d="M3 12h.01"></path><path d="M12 3h.01"></path><path d="M12 16v.01"></path><path d="M16 12h1"></path><path d="M21 12v.01"></path><path d="M12 21v-1"></path>`,
+        'link': `<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>`,
+        'trash-2': `<path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>`
+      });
+
+      const scanActionIconMap = Object.freeze({
+        copy: 'copy',
+        'generate-qr': 'qr-code',
+        'load-generated': 'qr-code',
+        open: 'link',
+        delete: 'trash-2'
+      });
+
+      function createEmbeddedLucideIcon(name) {
+        const markup = embeddedLucideIconMarkup[name];
+        if (!markup) return null;
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('class', 'lucide-icon');
+        svg.setAttribute('data-lucide', name);
+        svg.setAttribute('viewBox', '0 0 24 24');
+        svg.setAttribute('aria-hidden', 'true');
+        svg.setAttribute('focusable', 'false');
+        svg.innerHTML = markup;
+        return svg;
       }
 
       function createActionButton(label, action, kind = 'secondary', accessibleLabel = '') {
@@ -1870,13 +3110,317 @@
         button.type = 'button';
         button.className = `btn btn-${kind}`;
         button.dataset.action = action;
-        button.textContent = translate(label);
+
+        const iconName = scanActionIconMap[action];
+        const actionIcon = iconName ? createEmbeddedLucideIcon(iconName) : null;
+        if (actionIcon) button.append(actionIcon);
+
+        const labelElement = document.createElement('span');
+        labelElement.className = 'btn-label';
+        labelElement.textContent = translate(label);
+        button.append(labelElement);
+
         if (accessibleLabel) {
           button.setAttribute('aria-label', translate(accessibleLabel));
           button.title = translate(accessibleLabel);
         }
         return button;
       }
+
+      function createGeneratedHistoryId() {
+        if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+          return window.crypto.randomUUID();
+        }
+        generatedHistorySequence += 1;
+        return `generated-${Date.now()}-${generatedHistorySequence}-${Math.random().toString(16).slice(2)}`;
+      }
+
+      function getGeneratorStyleSnapshot() {
+        return {
+          size: qrSize.value,
+          level: qrLevel.value,
+          darkColor: darkColor.value,
+          lightColor: lightColor.value,
+          fileName: fileName.value.trim()
+        };
+      }
+
+      function getGeneratedHistoryRecordsFromDom() {
+        return Array.from(generatedHistory.querySelectorAll('.generated-history-item'))
+          .slice(0, MAX_STORED_GENERATED_QRS)
+          .map((item) => ({
+            id: item.dataset.generatedId,
+            value: item.generatedValue || '',
+            type: item.dataset.qrType || 'text',
+            generatedAt: item.dataset.generatedAt,
+            size: item.dataset.qrSize || '384',
+            level: item.dataset.qrLevel || 'M',
+            darkColor: item.dataset.darkColor || '#111827',
+            lightColor: item.dataset.lightColor || '#ffffff',
+            fileName: item.dataset.fileName || 'qr-kod'
+          }));
+      }
+
+      function saveGeneratedHistory() {
+        try {
+          localStorage.setItem(GENERATED_HISTORY_STORAGE_KEY, JSON.stringify(getGeneratedHistoryRecordsFromDom()));
+        } catch (error) {
+          console.warn('A generált QR-kód előzmények mentése nem sikerült:', error);
+        }
+      }
+
+      function updateGeneratedHistoryEmptyState() {
+        const hasItems = Boolean(generatedHistory.children.length);
+        generatedHistoryEmpty.hidden = hasItems;
+        clearGeneratedHistoryButton.disabled = !hasItems;
+      }
+
+      function applyGeneratedHistoryRecordToItem(item, record) {
+        item.dataset.generatedId = String(record.id || createGeneratedHistoryId());
+        item.dataset.generatedAt = record.generatedAt;
+        item.dataset.qrType = record.type || 'text';
+        item.dataset.qrSize = record.size || '384';
+        item.dataset.qrLevel = record.level || 'M';
+        item.dataset.darkColor = record.darkColor || '#111827';
+        item.dataset.lightColor = record.lightColor || '#ffffff';
+        item.dataset.fileName = record.fileName || 'qr-kod';
+        item.generatedValue = record.value;
+
+        const valueElement = item.querySelector('.scan-history-value');
+        const typeChip = item.querySelector('[data-role="generated-type"]');
+        const timeChip = item.querySelector('[data-role="generated-time"]');
+        if (valueElement) valueElement.textContent = record.value;
+        if (typeChip) typeChip.textContent = `${translate('Típus')}: ${translate(QR_TYPE_LABELS[record.type] || 'Szöveg')}`;
+        const generatedAt = new Date(record.generatedAt);
+        if (timeChip && !Number.isNaN(generatedAt.getTime())) {
+          timeChip.textContent = `${translate('Generálva')}: ${formatScanDate(generatedAt)}`;
+        }
+      }
+
+      function addGeneratedHistoryItem(record, shouldSave = true) {
+        const item = document.createElement('article');
+        item.className = 'scan-history-item generated-history-item';
+        item.setAttribute('role', 'listitem');
+        item.setAttribute('tabindex', '-1');
+
+        const main = document.createElement('div');
+        main.className = 'scan-history-main';
+
+        const content = document.createElement('div');
+        content.className = 'scan-history-content';
+
+        const valueElement = document.createElement('div');
+        valueElement.className = 'scan-history-value';
+
+        const meta = document.createElement('div');
+        meta.className = 'scan-history-meta';
+
+        const typeChip = document.createElement('span');
+        typeChip.className = 'meta-chip';
+        typeChip.dataset.role = 'generated-type';
+
+        const timeChip = document.createElement('span');
+        timeChip.className = 'meta-chip';
+        timeChip.dataset.role = 'generated-time';
+        meta.append(typeChip, timeChip);
+
+        const classification = classifyResult(record.value);
+        const actions = document.createElement('div');
+        actions.className = 'scan-history-actions generated-history-actions';
+        actions.append(createActionButton('Visszatöltés', 'load-generated', 'secondary', 'Generált QR-kód visszatöltése'));
+        actions.append(createActionButton('Másolás', 'copy'));
+        if (classification.openable) actions.append(createActionButton('Megnyitás', 'open', 'primary'));
+        actions.append(createActionButton('Törlés', 'delete', 'danger'));
+
+        content.append(valueElement, actions, meta);
+        main.append(content);
+        item.append(main);
+        applyGeneratedHistoryRecordToItem(item, record);
+        generatedHistory.prepend(item);
+
+        while (generatedHistory.children.length > MAX_STORED_GENERATED_QRS) {
+          generatedHistory.lastElementChild.remove();
+        }
+
+        updateGeneratedHistoryEmptyState();
+        if (shouldSave) saveGeneratedHistory();
+        return item;
+      }
+
+      function upsertGeneratedHistoryRecord(record) {
+        const existing = Array.from(generatedHistory.querySelectorAll('.generated-history-item')).find((item) => (
+          item.generatedValue === record.value && item.dataset.qrType === record.type
+        ));
+
+        if (existing) {
+          applyGeneratedHistoryRecordToItem(existing, { ...record, id: existing.dataset.generatedId });
+          generatedHistory.prepend(existing);
+          saveGeneratedHistory();
+          return existing;
+        }
+
+        return addGeneratedHistoryItem(record, true);
+      }
+
+      function saveCurrentGeneratedQrToHistory() {
+        const payload = buildQrPayload();
+        if (!payload.text) return null;
+
+        return upsertGeneratedHistoryRecord({
+          id: createGeneratedHistoryId(),
+          value: payload.text,
+          type: activeQrType,
+          generatedAt: new Date().toISOString(),
+          ...getGeneratorStyleSnapshot()
+        });
+      }
+
+      function loadGeneratedHistory() {
+        let records = [];
+        try {
+          const storedValue = localStorage.getItem(GENERATED_HISTORY_STORAGE_KEY);
+          const parsedValue = storedValue ? JSON.parse(storedValue) : [];
+          if (Array.isArray(parsedValue)) {
+            records = parsedValue
+              .filter((record) => record && typeof record.value === 'string' && record.value.length > 0)
+              .slice(0, MAX_STORED_GENERATED_QRS);
+          }
+        } catch (error) {
+          console.warn('A generált QR-kód előzmények betöltése nem sikerült:', error);
+        }
+
+        records.slice().reverse().forEach((record) => {
+          const generatedAt = new Date(record.generatedAt);
+          addGeneratedHistoryItem({
+            id: record.id || createGeneratedHistoryId(),
+            value: record.value,
+            type: QR_TYPE_LABELS[record.type] ? record.type : classifyResult(record.value).type,
+            generatedAt: Number.isNaN(generatedAt.getTime()) ? new Date().toISOString() : generatedAt.toISOString(),
+            size: record.size || '384',
+            level: record.level || 'M',
+            darkColor: record.darkColor || '#111827',
+            lightColor: record.lightColor || '#ffffff',
+            fileName: record.fileName || 'qr-kod'
+          }, false);
+        });
+
+        updateGeneratedHistoryEmptyState();
+      }
+
+      function restoreGeneratorStyleFromHistoryItem(item) {
+        if (['256', '384', '512', '768'].includes(item.dataset.qrSize)) qrSize.value = item.dataset.qrSize;
+        if (['L', 'M', 'Q', 'H'].includes(item.dataset.qrLevel)) qrLevel.value = item.dataset.qrLevel;
+        if (/^#[0-9a-f]{6}$/i.test(item.dataset.darkColor || '')) darkColor.value = item.dataset.darkColor;
+        if (/^#[0-9a-f]{6}$/i.test(item.dataset.lightColor || '')) lightColor.value = item.dataset.lightColor;
+        fileName.value = item.dataset.fileName || 'qr-kod';
+        updateColorLabels();
+        syncColorPresetState();
+      }
+
+      function openDeleteGeneratedHistoryModal() {
+        if (!generatedHistory.children.length) return;
+        deleteGeneratedHistoryPreviousFocus = document.activeElement;
+        deleteGeneratedHistoryModal.hidden = false;
+        document.body.classList.add('modal-open');
+        window.requestAnimationFrame(() => cancelDeleteGeneratedHistoryButton.focus());
+      }
+
+      function closeDeleteGeneratedHistoryModal() {
+        if (deleteGeneratedHistoryModal.hidden) return;
+        deleteGeneratedHistoryModal.hidden = true;
+        document.body.classList.remove('modal-open');
+        if (deleteGeneratedHistoryPreviousFocus && !deleteGeneratedHistoryPreviousFocus.disabled && typeof deleteGeneratedHistoryPreviousFocus.focus === 'function') {
+          deleteGeneratedHistoryPreviousFocus.focus();
+        } else if (!generatedHistory.children.length) {
+          generatedHistoryEmpty.focus();
+        }
+        deleteGeneratedHistoryPreviousFocus = null;
+      }
+
+      function clearAllGeneratedHistory() {
+        generatedHistory.replaceChildren();
+        try {
+          localStorage.removeItem(GENERATED_HISTORY_STORAGE_KEY);
+        } catch (error) {
+          console.warn('A generált QR-kód előzmények törlése nem sikerült:', error);
+        }
+        updateGeneratedHistoryEmptyState();
+      }
+
+      clearGeneratedHistoryButton.addEventListener('click', openDeleteGeneratedHistoryModal);
+      cancelDeleteGeneratedHistoryButton.addEventListener('click', closeDeleteGeneratedHistoryModal);
+      confirmDeleteGeneratedHistoryButton.addEventListener('click', () => {
+        clearAllGeneratedHistory();
+        closeDeleteGeneratedHistoryModal();
+      });
+
+      deleteGeneratedHistoryModal.addEventListener('click', (event) => {
+        if (event.target.hasAttribute('data-generated-modal-close')) closeDeleteGeneratedHistoryModal();
+      });
+
+      deleteGeneratedHistoryModal.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          closeDeleteGeneratedHistoryModal();
+          return;
+        }
+        if (event.key !== 'Tab') return;
+        const focusable = [cancelDeleteGeneratedHistoryButton, confirmDeleteGeneratedHistoryButton];
+        const currentIndex = focusable.indexOf(document.activeElement);
+        if (event.shiftKey && currentIndex <= 0) {
+          event.preventDefault();
+          focusable[focusable.length - 1].focus();
+        } else if (!event.shiftKey && currentIndex === focusable.length - 1) {
+          event.preventDefault();
+          focusable[0].focus();
+        }
+      });
+
+      generatedHistory.addEventListener('click', async (event) => {
+        const button = event.target.closest('button[data-action]');
+        if (!button || !generatedHistory.contains(button)) return;
+
+        const item = button.closest('.generated-history-item');
+        if (!item) return;
+        const value = item.generatedValue || '';
+        const action = button.dataset.action;
+
+        if (action === 'load-generated') {
+          populateGeneratorFromScannedValue(value, item.dataset.qrType);
+          restoreGeneratorStyleFromHistoryItem(item);
+          generateQrCode({ silent: true });
+          const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          window.requestAnimationFrame(() => {
+            qrStage.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center', inline: 'nearest' });
+          });
+          showStatus(generatorStatus, 'A generált QR-kód visszatöltve.', 'success');
+          return;
+        }
+
+        if (action === 'copy') {
+          try {
+            await copyTextToClipboard(value);
+            showStatus(generatorStatus, 'A QR-kód értéke a vágólapra került.', 'success');
+          } catch (error) {
+            console.error(error);
+            showStatus(generatorStatus, 'A QR-kód értékének másolását a böngésző nem engedélyezte.', 'error');
+          }
+          return;
+        }
+
+        if (action === 'open') {
+          const target = value.trim();
+          if (/^(https?:\/\/|mailto:|tel:)/i.test(target)) window.open(target, '_blank', 'noopener,noreferrer');
+          return;
+        }
+
+        if (action === 'delete') {
+          item.remove();
+          updateGeneratedHistoryEmptyState();
+          saveGeneratedHistory();
+          showStatus(generatorStatus, 'A kiválasztott generált QR-kód törölve.', 'info');
+        }
+      });
 
       function createScanId() {
         if (window.crypto && typeof window.crypto.randomUUID === 'function') {
@@ -2210,10 +3754,9 @@
         }
 
         if (action === 'generate-qr') {
-          qrText.value = value;
-          charCount.textContent = String(value.length);
+          populateGeneratorFromScannedValue(value);
           await selectTab('generator');
-          generateQrCode();
+          generateQrCode({ silent: true });
           const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
           window.requestAnimationFrame(() => {
             qrStage.scrollIntoView({
@@ -2245,8 +3788,13 @@
 
       window.addEventListener('pagehide', () => { stopScannerSilently(); });
 
+      updateCharacterCount();
+      updateColorLabels();
+      syncColorPresetState();
+      selectQrType('url', { generate: false });
       captureStaticTranslations();
       initializeLanguage();
+      loadGeneratedHistory();
       loadScanHistory();
       if (location.hash === '#scanner') selectTab('scanner');
     })();
