@@ -3238,30 +3238,6 @@
         });
       }
 
-      function isIosLikeDevice() {
-        return /iPad|iPhone|iPod/i.test(navigator.userAgent)
-          || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-      }
-
-      function createShareableFile(blob, name) {
-        if (typeof File === 'undefined') return null;
-        try {
-          return new File([blob], name, { type: blob.type || 'application/octet-stream', lastModified: Date.now() });
-        } catch (error) {
-          console.warn('A megosztható fájl létrehozása nem sikerült:', error);
-          return null;
-        }
-      }
-
-      function canShareFile(file) {
-        if (!file || typeof navigator.share !== 'function' || typeof navigator.canShare !== 'function') return false;
-        try {
-          return navigator.canShare({ files: [file] });
-        } catch (error) {
-          return false;
-        }
-      }
-
       function triggerBlobDownload(blob, name) {
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -3278,36 +3254,15 @@
         }, 4000);
       }
 
-      function saveBlobForDevice(blob, name) {
-        const file = createShareableFile(blob, name);
-        if (isIosLikeDevice() && canShareFile(file)) {
-          return navigator.share({ files: [file], title: name })
-            .then(() => 'shared')
-            .catch((error) => {
-              if (error && error.name === 'AbortError') return 'cancelled';
-              console.warn('A natív mentési panel nem nyitható meg, közvetlen letöltés következik:', error);
-              triggerBlobDownload(blob, name);
-              return 'downloaded';
-            });
-        }
-
-        triggerBlobDownload(blob, name);
-        return Promise.resolve('downloaded');
-      }
-
-      downloadButton.addEventListener('click', async () => {
+      downloadButton.addEventListener('click', () => {
         const canvas = getQrCanvas();
         if (!canvas) return;
         saveCurrentGeneratedQrToHistory();
 
         try {
           const blob = getQrPngBlobSync(canvas);
-          const result = await saveBlobForDevice(blob, `${sanitizedFileName()}.png`);
-          if (result === 'shared') {
-            showStatus(generatorStatus, 'Megnyílt a mobil mentési/megosztási panel.', 'success');
-          } else if (result === 'downloaded') {
+          triggerBlobDownload(blob, `${sanitizedFileName()}.png`);
         showStatus(generatorStatus, 'A PNG-fájl letöltése elindult.', 'success');
-          }
         } catch (error) {
           console.error(error);
           showStatus(generatorStatus, 'A PNG-fájl mentése nem sikerült ezen a böngészőn.', 'error');
@@ -3334,19 +3289,15 @@
         return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${totalSize} ${totalSize}" shape-rendering="crispEdges"><rect width="${totalSize}" height="${totalSize}" fill="${lightColor.value}"/><path d="${pathParts.join('')}" fill="${darkColor.value}"/></svg>`;
       }
 
-      downloadSvgButton.addEventListener('click', async () => {
+      downloadSvgButton.addEventListener('click', () => {
         const svg = createQrSvg();
         if (!svg) return;
         saveCurrentGeneratedQrToHistory();
         const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
 
         try {
-          const result = await saveBlobForDevice(blob, `${sanitizedFileName()}.svg`);
-          if (result === 'shared') {
-            showStatus(generatorStatus, 'Megnyílt a mobil mentési/megosztási panel.', 'success');
-          } else if (result === 'downloaded') {
+          triggerBlobDownload(blob, `${sanitizedFileName()}.svg`);
         showStatus(generatorStatus, 'Az SVG-fájl letöltése elindult.', 'success');
-          }
         } catch (error) {
           console.error(error);
           showStatus(generatorStatus, 'Az SVG-fájl mentése nem sikerült ezen a böngészőn.', 'error');
