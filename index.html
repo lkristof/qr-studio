@@ -2232,6 +2232,7 @@
       const MAX_STORED_SCANS = 100;
       const MAX_STORED_GENERATED_QRS = 100;
       const LANGUAGE_STORAGE_KEY = 'qr-studio.language.v1';
+      const GENERATOR_URL_PARAM_KEYS = ['qr', 'type', 'size', 'level', 'dark', 'light', 'name'];
 
       const englishTranslations = {
         "Találtál valamit 👀": "You found something 👀",
@@ -2756,7 +2757,9 @@
         scannerPanel.hidden = !scannerSelected;
 
         if (!scannerSelected) await stopScannerSilently();
-        history.replaceState(null, '', scannerSelected ? '#scanner' : '#generator');
+        const nextUrl = new URL(window.location.href);
+        nextUrl.hash = scannerSelected ? '#scanner' : '#generator';
+        history.replaceState(null, '', `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`);
       }
 
       generatorTab.addEventListener('click', () => selectTab('generator'));
@@ -3073,12 +3076,72 @@
         liveGenerateTimer = window.setTimeout(() => generateQrCode({ silent: true }), 220);
       }
 
+      function replaceCurrentUrl(url) {
+        history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+      }
+
+      function clearGeneratorUrlState() {
+        const url = new URL(window.location.href);
+        let changed = false;
+        GENERATOR_URL_PARAM_KEYS.forEach((key) => {
+          if (url.searchParams.has(key)) {
+            url.searchParams.delete(key);
+            changed = true;
+          }
+        });
+        if (changed) replaceCurrentUrl(url);
+      }
+
+      function syncGeneratorUrlState(qrValue) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('qr', qrValue);
+        url.searchParams.set('type', activeQrType);
+        url.searchParams.set('size', qrSize.value);
+        url.searchParams.set('level', qrLevel.value);
+        url.searchParams.set('dark', darkColor.value.replace(/^#/, ''));
+        url.searchParams.set('light', lightColor.value.replace(/^#/, ''));
+        url.searchParams.set('name', fileName.value.trim() || getDefaultFileName());
+        url.hash = '#generator';
+        replaceCurrentUrl(url);
+      }
+
+      function applyGeneratorStateFromUrl() {
+        const params = new URLSearchParams(window.location.search);
+        const qrValue = params.get('qr');
+        if (!qrValue) return false;
+
+        const preferredType = params.get('type') || '';
+        populateGeneratorFromScannedValue(qrValue, preferredType);
+
+        const size = params.get('size');
+        const level = params.get('level');
+        const dark = params.get('dark');
+        const light = params.get('light');
+        const name = params.get('name');
+
+        if (['256', '384', '512', '768', '1024'].includes(size)) qrSize.value = size;
+        if (['L', 'M', 'Q', 'H'].includes(level)) qrLevel.value = level;
+        if (/^[0-9a-f]{6}$/i.test(dark || '')) darkColor.value = `#${dark}`;
+        if (/^[0-9a-f]{6}$/i.test(light || '')) lightColor.value = `#${light}`;
+        if (name) {
+          fileNameTouched = true;
+          fileName.value = name.slice(0, 60);
+        }
+
+        updateColorLabels();
+        syncColorPresetState();
+        updateCharacterCount();
+        generateQrCode({ silent: true });
+        return true;
+      }
+
       function generateQrCode({ silent = false } = {}) {
         window.clearTimeout(liveGenerateTimer);
         const payload = buildQrPayload();
 
         if (!payload.text) {
           resetQrPreview();
+          clearGeneratorUrlState();
           if (!silent) {
             showStatus(generatorStatus, payload.message || 'Töltsd ki a kiválasztott QR-típus kötelező mezőit.', 'error');
             if (payload.focus) payload.focus.focus();
@@ -3111,6 +3174,7 @@
           downloadSvgButton.disabled = false;
           copyImageButton.disabled = false;
           copyValueButton.disabled = false;
+          syncGeneratorUrlState(payload.text);
           if (!silent) showStatus(generatorStatus, 'A QR-kód elkészült.', 'success');
           return true;
         } catch (error) {
@@ -4273,7 +4337,17 @@
       initializeLanguage();
       loadGeneratedHistory();
       loadScanHistory();
-      if (location.hash === '#scanner') selectTab('scanner');
+
+      const finishInitialRouting = () => {
+        const loadedGeneratorStateFromUrl = applyGeneratorStateFromUrl();
+        if (location.hash === '#scanner' && !loadedGeneratorStateFromUrl) selectTab('scanner');
+      };
+
+      if (document.readyState === 'loading') {
+        window.addEventListener('DOMContentLoaded', finishInitialRouting, { once: true });
+      } else {
+        finishInitialRouting();
+      }
     })();
   </script>
 </body>
