@@ -921,6 +921,8 @@
 
     .status {
       --status-accent: var(--primary);
+      --status-progress: 0;
+      --status-duration: 0ms;
       position: fixed;
       z-index: 160;
       left: 50vw;
@@ -956,6 +958,21 @@
       border-radius: 50%;
       background: var(--status-accent);
       box-shadow: 0 0 0 4px color-mix(in srgb, var(--status-accent) 14%, transparent);
+    }
+
+    .status::after {
+      content: "";
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 3px;
+      height: 2px;
+      border-radius: 999px;
+      background: var(--status-accent);
+      opacity: .72;
+      transform: scaleX(var(--status-progress));
+      transform-origin: left center;
+      transition: transform var(--status-duration) linear;
     }
 
     .status.show {
@@ -2632,11 +2649,18 @@
         const previousTimer = statusTimers.get(element);
         if (previousTimer) window.clearTimeout(previousTimer);
 
+        const duration = kind === 'error' ? 6000 : 3800;
+
         element.dataset.messageKey = message;
         element.textContent = translate(message);
         element.className = `status show ${kind}`;
 
-        const duration = kind === 'error' ? 6000 : 3800;
+        element.style.setProperty('--status-duration', '0ms');
+        element.style.setProperty('--status-progress', '1');
+        void element.offsetWidth;
+        element.style.setProperty('--status-duration', `${duration}ms`);
+        element.style.setProperty('--status-progress', '0');
+
         const timer = window.setTimeout(() => hideStatus(element), duration);
         statusTimers.set(element, timer);
       }
@@ -2654,6 +2678,8 @@
           element.textContent = '';
           element.removeAttribute('data-message-key');
           element.className = 'status';
+          element.style.removeProperty('--status-duration');
+          element.style.removeProperty('--status-progress');
         }, 180);
       }
 
