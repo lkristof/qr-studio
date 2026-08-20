@@ -2645,9 +2645,16 @@
         const previousTimer = statusTimers.get(element);
         if (previousTimer) window.clearTimeout(previousTimer);
         statusTimers.delete(element);
-        element.textContent = '';
-        element.removeAttribute('data-message-key');
-        element.className = 'status';
+
+        element.classList.remove('show');
+
+        window.setTimeout(() => {
+          if (element.classList.contains('show')) return;
+
+          element.textContent = '';
+          element.removeAttribute('data-message-key');
+          element.className = 'status';
+        }, 180);
       }
 
       function hideScannerSuccess() {
