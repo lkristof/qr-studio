@@ -748,6 +748,7 @@
     }
 
     .options-grid > .field { margin-top: 0; }
+    .color-options-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
     .color-control {
       display: grid;
@@ -787,13 +788,6 @@
     .color-control span { min-width: 0; }
     .color-control strong { display: block; font-size: .79rem; }
     .color-control small { display: block; margin-top: 3px; color: var(--muted); font-size: .7rem; overflow: hidden; text-overflow: ellipsis; }
-
-    .actions {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 10px;
-      margin-top: 22px;
-    }
 
     .btn {
       display: inline-flex;
@@ -1564,7 +1558,6 @@
       .generator-step-copy p { margin-top: 3px; line-height: 1.4; }
       .preview-heading { flex-wrap: wrap; gap: 10px; }
       .preview-heading-badges { width: 100%; justify-content: flex-start; }
-      .actions { grid-template-columns: 1fr; }
       .preview-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .preview-actions .btn { padding-inline: 9px; font-size: .78rem; }
       .qr-stage { min-height: 320px; padding: 18px; }
@@ -1874,7 +1867,7 @@
                   </div>
                 </div>
 
-                <div class="options-grid">
+                <div class="options-grid color-options-grid">
                   <label class="color-control" for="dark-color">
                     <input id="dark-color" type="color" value="#111827">
                     <span><strong>Kód színe</strong><small id="dark-color-value">#111827</small></span>
@@ -1885,10 +1878,6 @@
                     <span><strong>Háttér</strong><small id="light-color-value">#FFFFFF</small></span>
                   </label>
 
-                  <button class="btn btn-secondary" id="reset-style" type="button">
-                    <svg class="lucide-icon" data-lucide="rotate-ccw" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
-                    Alaphelyzet
-                  </button>
                 </div>
 
                 <div class="options-grid">
@@ -1919,13 +1908,6 @@
                   </div>
                 </div>
               </section>
-
-              <div class="actions">
-                <button class="btn btn-secondary" id="clear-button" type="button">
-                  <svg class="lucide-icon" data-lucide="trash-2" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                  <span>Tartalom törlése</span>
-                </button>
-              </div>
 
               <div class="status" id="generator-status" role="status" aria-live="polite"></div>
             </form>
@@ -2185,8 +2167,6 @@
       const previewTypeLabel = $('#preview-type-label');
       const qrContentPreview = $('#qr-content-preview');
       const qrContentPreviewValue = $('#qr-content-preview-value');
-      const clearButton = $('#clear-button');
-      const resetStyle = $('#reset-style');
       const downloadButton = $('#download-button');
       const downloadSvgButton = $('#download-svg-button');
       const copyImageButton = $('#copy-image-button');
@@ -2286,7 +2266,6 @@
         "Fájlnév": "File name",
         "Kód színe": "Code color",
         "Háttér": "Background",
-        "Alaphelyzet": "Reset",
         "QR-kód létrehozása": "Create QR code",
         "Törlés": "Delete",
         "Előnézet": "Preview",
@@ -2432,7 +2411,6 @@
         "Óceán": "Ocean",
         "Erdő": "Forest",
         "Naplemente": "Sunset",
-        "Tartalom törlése": "Clear content",
         "A kész kód PNG- és SVG-formátumban letölthető.": "The generated code can be downloaded as PNG or SVG.",
         "Válassz típust, majd töltsd ki a szükséges mezőket.": "Choose a type, then fill in the required fields.",
         "SVG letöltése": "Download SVG",
@@ -2456,6 +2434,11 @@
       const staticAttributeBindings = [];
       let languageMode = resolveAutomaticLanguage();
       let currentLanguage = languageMode;
+      let fileNameTouched = false;
+
+      function getDefaultFileName() {
+        return currentLanguage === 'en' ? 'qr-code' : 'qr-kod';
+      }
 
       function resolveAutomaticLanguage() {
         // Nincs külön „Automatikus” opció: első indításkor a böngésző nyelve dönt.
@@ -2589,6 +2572,7 @@
       function applyLanguage() {
         currentLanguage = languageMode;
         document.documentElement.lang = currentLanguage;
+        if (!fileNameTouched) fileName.value = getDefaultFileName();
 
         staticTextBindings.forEach((binding) => {
           binding.node.nodeValue = `${binding.prefix}${translate(binding.original)}${binding.suffix}`;
@@ -2778,6 +2762,7 @@
       generatorTab.addEventListener('click', () => selectTab('generator'));
       scannerTab.addEventListener('click', () => selectTab('scanner'));
       languageSelect.addEventListener('change', () => setLanguageMode(languageSelect.value));
+      fileName.addEventListener('input', () => { fileNameTouched = true; });
 
       const brandMark = $('.brand-mark');
       const easterEggModal = $('#easter-egg-modal');
@@ -2979,16 +2964,6 @@
         scheduleLiveGeneration();
       });
 
-      resetStyle.addEventListener('click', () => {
-        qrSize.value = '384';
-        qrLevel.value = 'M';
-        darkColor.value = '#111827';
-        lightColor.value = '#ffffff';
-        updateColorLabels();
-        syncColorPresetState();
-        hideStatus(generatorStatus);
-        scheduleLiveGeneration();
-      });
 
       function normalizeWebsiteUrl(value) {
         const trimmed = value.trim();
@@ -3169,23 +3144,6 @@
         }
       });
 
-      clearButton.addEventListener('click', () => {
-        qrTypePanels.forEach((panel) => {
-          panel.querySelectorAll('input, textarea, select').forEach((field) => {
-            if (field.type === 'checkbox') field.checked = false;
-            else if (field.tagName === 'SELECT') field.selectedIndex = 0;
-            else field.value = '';
-          });
-        });
-        wifiPassword.disabled = false;
-        wifiPassword.type = 'text';
-        syncWifiPasswordVisibility();
-        updateCharacterCount();
-        selectQrType('text', { focus: true, generate: false });
-        resetQrPreview();
-        hideStatus(generatorStatus);
-      });
-
       function getQrCanvas() {
         const canvas = qrCodeContainer.querySelector('canvas');
         if (canvas) return canvas;
@@ -3202,9 +3160,9 @@
       }
 
       function sanitizedFileName() {
-        return (fileName.value.trim() || 'qr-kod')
+        return (fileName.value.trim() || getDefaultFileName())
           .replace(/[^a-zA-Z0-9áéíóöőúüűÁÉÍÓÖŐÚÜŰ_-]+/g, '-')
-          .replace(/^-+|-+$/g, '') || 'qr-kod';
+          .replace(/^-+|-+$/g, '') || getDefaultFileName();
       }
 
       function dataUrlToBlob(dataUrl) {
@@ -3254,13 +3212,38 @@
         }, 4000);
       }
 
+      function createPaddedPngCanvas(sourceCanvas) {
+        const model = qrInstance && qrInstance._oQRCode;
+        if (!model || typeof model.getModuleCount !== 'function') return sourceCanvas;
+
+        const moduleCount = model.getModuleCount();
+        if (!moduleCount) return sourceCanvas;
+
+        const marginModules = 2;
+        const modulePixelSize = sourceCanvas.width / moduleCount;
+        const marginPixels = Math.max(1, Math.round(modulePixelSize * marginModules));
+        const exportCanvas = document.createElement('canvas');
+        exportCanvas.width = sourceCanvas.width + marginPixels * 2;
+        exportCanvas.height = sourceCanvas.height + marginPixels * 2;
+
+        const context = exportCanvas.getContext('2d');
+        if (!context) return sourceCanvas;
+
+        context.imageSmoothingEnabled = false;
+        context.fillStyle = lightColor.value;
+        context.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+        context.drawImage(sourceCanvas, marginPixels, marginPixels);
+        return exportCanvas;
+      }
+
       downloadButton.addEventListener('click', () => {
         const canvas = getQrCanvas();
         if (!canvas) return;
         saveCurrentGeneratedQrToHistory();
 
         try {
-          const blob = getQrPngBlobSync(canvas);
+          const exportCanvas = createPaddedPngCanvas(canvas);
+          const blob = getQrPngBlobSync(exportCanvas);
           triggerBlobDownload(blob, `${sanitizedFileName()}.png`);
         showStatus(generatorStatus, 'A PNG-fájl letöltése elindult.', 'success');
         } catch (error) {
@@ -3274,7 +3257,7 @@
         if (!model || typeof model.getModuleCount !== 'function' || typeof model.isDark !== 'function') return '';
 
         const moduleCount = model.getModuleCount();
-        const margin = 4;
+        const margin = 2;
         const totalSize = moduleCount + margin * 2;
         const pathParts = [];
 
@@ -3333,6 +3316,7 @@
             new ClipboardItem({ 'image/png': pngBlobPromise })
           ]);
           showStatus(generatorStatus, 'A QR-kód képként a vágólapra került.', 'success');
+          showCopySuccessIcon(copyImageButton);
         } catch (error) {
           console.error(error);
           showStatus(generatorStatus, 'A kép másolását a böngésző nem engedélyezte. Használd a letöltést.', 'error');
@@ -3347,6 +3331,7 @@
         try {
           await copyTextToClipboard(payload.text);
           showStatus(generatorStatus, 'A QR-kód értéke a vágólapra került.', 'success');
+          showCopySuccessIcon(copyValueButton);
         } catch (error) {
           console.error(error);
           showStatus(generatorStatus, 'A QR-kód értékének másolását a böngésző nem engedélyezte.', 'error');
@@ -3534,6 +3519,7 @@
       const embeddedLucideIconMarkup = Object.freeze({
         'plus': `<path d="M5 12h14"></path><path d="M12 5v14"></path>`,
         'copy': `<rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>`,
+        'check': `<path d="M20 6 9 17l-5-5"></path>`,
         'qr-code': `<rect width="5" height="5" x="3" y="3" rx="1"></rect><rect width="5" height="5" x="16" y="3" rx="1"></rect><rect width="5" height="5" x="3" y="16" rx="1"></rect><path d="M21 16h-3a2 2 0 0 0-2 2v3"></path><path d="M21 21v.01"></path><path d="M12 7v3a2 2 0 0 1-2 2H7"></path><path d="M3 12h.01"></path><path d="M12 3h.01"></path><path d="M12 16v.01"></path><path d="M16 12h1"></path><path d="M21 12v.01"></path><path d="M12 21v-1"></path>`,
         'external-link': `<path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>`,
         'trash-2': `<path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>`
@@ -3558,6 +3544,29 @@
         svg.setAttribute('focusable', 'false');
         svg.innerHTML = markup;
         return svg;
+      }
+
+      const copyIconTimers = new WeakMap();
+
+      function showCopySuccessIcon(button) {
+        const icon = button.querySelector('.lucide-icon');
+        if (!icon) return;
+
+        const previousTimer = copyIconTimers.get(button);
+        if (previousTimer) window.clearTimeout(previousTimer);
+
+        const checkMarkup = embeddedLucideIconMarkup.check;
+        const copyMarkup = embeddedLucideIconMarkup.copy;
+        icon.dataset.lucide = 'check';
+        icon.innerHTML = checkMarkup;
+
+        const timer = window.setTimeout(() => {
+          icon.dataset.lucide = 'copy';
+          icon.innerHTML = copyMarkup;
+          copyIconTimers.delete(button);
+        }, 3800);
+
+        copyIconTimers.set(button, timer);
       }
 
       function createActionButton(label, action, kind = 'secondary', accessibleLabel = '') {
@@ -3773,7 +3782,8 @@
         if (['L', 'M', 'Q', 'H'].includes(item.dataset.qrLevel)) qrLevel.value = item.dataset.qrLevel;
         if (/^#[0-9a-f]{6}$/i.test(item.dataset.darkColor || '')) darkColor.value = item.dataset.darkColor;
         if (/^#[0-9a-f]{6}$/i.test(item.dataset.lightColor || '')) lightColor.value = item.dataset.lightColor;
-        fileName.value = item.dataset.fileName || 'qr-kod';
+        fileNameTouched = true;
+        fileName.value = item.dataset.fileName || getDefaultFileName();
         updateColorLabels();
         syncColorPresetState();
       }
