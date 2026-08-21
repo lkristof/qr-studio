@@ -664,7 +664,7 @@
 
     .color-preset-grid {
       display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 10px;
     }
 
@@ -1568,7 +1568,6 @@
         gap: 8px;
       }
       .color-preset { grid-column: span 2; padding: 7px; }
-      .color-preset:nth-child(4) { grid-column: 2 / span 2; }
       .color-preset-swatch { height: 46px; }
       .generator-step { padding: 14px; }
       .generator-step-heading { margin-bottom: 14px; }
@@ -1865,21 +1864,25 @@
                       <span class="color-preset-swatch" style="--preset-dark:#111827;--preset-light:#ffffff" aria-hidden="true"></span>
                       <span>Klasszikus</span>
                     </button>
+                    <button class="color-preset" type="button" data-dark="#1d4ed8" data-light="#eff6ff" aria-pressed="false">
+                      <span class="color-preset-swatch" style="--preset-dark:#1d4ed8;--preset-light:#eff6ff" aria-hidden="true"></span>
+                      <span>Kék</span>
+                    </button>
                     <button class="color-preset" type="button" data-dark="#4338ca" data-light="#eef2ff" aria-pressed="false">
                       <span class="color-preset-swatch" style="--preset-dark:#4338ca;--preset-light:#eef2ff" aria-hidden="true"></span>
                       <span>Indigó</span>
                     </button>
                     <button class="color-preset" type="button" data-dark="#0f172a" data-light="#e0f2fe" aria-pressed="false">
                       <span class="color-preset-swatch" style="--preset-dark:#0f172a;--preset-light:#e0f2fe" aria-hidden="true"></span>
-                      <span>Óceán</span>
+                      <span>Éjkék</span>
                     </button>
                     <button class="color-preset" type="button" data-dark="#065f46" data-light="#ecfdf5" aria-pressed="false">
                       <span class="color-preset-swatch" style="--preset-dark:#065f46;--preset-light:#ecfdf5" aria-hidden="true"></span>
-                      <span>Erdő</span>
+                      <span>Smaragd</span>
                     </button>
                     <button class="color-preset" type="button" data-dark="#7f1d1d" data-light="#fff7ed" aria-pressed="false">
                       <span class="color-preset-swatch" style="--preset-dark:#7f1d1d;--preset-light:#fff7ed" aria-hidden="true"></span>
-                      <span>Naplemente</span>
+                      <span>Bordó</span>
                     </button>
                   </div>
                 </div>
@@ -2425,10 +2428,11 @@
         "Színpaletta": "Color palette",
         "Válassz mintát vagy adj meg saját színeket": "Choose a preset or enter custom colors",
         "Klasszikus": "Classic",
+        "Kék": "Blue",
         "Indigó": "Indigo",
-        "Óceán": "Ocean",
-        "Erdő": "Forest",
-        "Naplemente": "Sunset",
+        "Éjkék": "Navy",
+        "Smaragd": "Emerald",
+        "Bordó": "Burgundy",
         "A kész kód PNG- és SVG-formátumban letölthető.": "The generated code can be downloaded as PNG or SVG.",
         "Válassz típust, majd töltsd ki a szükséges mezőket.": "Choose a type, then fill in the required fields.",
         "SVG letöltése": "Download SVG",
