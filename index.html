@@ -4373,7 +4373,19 @@
 
       const finishInitialRouting = () => {
         const loadedGeneratorStateFromUrl = applyGeneratorStateFromUrl();
-        if (location.hash === '#scanner' && !loadedGeneratorStateFromUrl) selectTab('scanner');
+
+        if (loadedGeneratorStateFromUrl) {
+          window.requestAnimationFrame(() => {
+            qrStage.scrollIntoView({
+              behavior: 'auto',
+              block: 'start',
+              inline: 'nearest'
+            });
+          });
+          return;
+        }
+
+        if (location.hash === '#scanner') selectTab('scanner');
       };
 
       if (document.readyState === 'loading') {
