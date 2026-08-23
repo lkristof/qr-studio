@@ -20,7 +20,7 @@ Generate QR codes for multiple content types:
 * **SMS** — recipient and pre-filled message
 * **Contact** — vCard contact information
 
-QR codes are updated with a live preview while editing.
+QR codes are updated automatically with a live preview while editing.
 
 ### Customization
 
@@ -30,10 +30,10 @@ Customize the appearance and output of generated QR codes:
 * Custom foreground and background colors
 * Adjustable QR code size
 * Configurable error-correction level
+* Custom output filename
 * Live preview
-* Resettable styling options
 
-### Export
+### Export and Sharing
 
 Generated QR codes can be:
 
@@ -41,6 +41,22 @@ Generated QR codes can be:
 * Downloaded as **SVG**
 * Copied directly to the clipboard as an image
 * Copied as their encoded value
+
+### Restorable Generator State
+
+After a QR code is generated, its content and generator settings are reflected in the page URL.
+
+The URL can restore:
+
+* QR code content
+* Content type
+* QR code size
+* Error-correction level
+* Foreground color
+* Background color
+* Output filename
+
+This makes it possible to reload or share a configured generator state without a backend service.
 
 ### QR Code Scanner
 
@@ -51,36 +67,51 @@ Scan QR codes using:
 
 On supported devices, camera zoom controls are also available.
 
+After scanning a QR code, you can:
+
+* Copy its decoded value
+* Open supported links
+* Generate a new QR code from the scanned content
+* Delete individual history entries
+
 ### Local History
 
-QR Studio keeps a history of both:
+QR Studio keeps a local history of both:
 
 * Generated QR codes
 * Scanned QR codes
 
-History is stored locally in your browser using `localStorage` and can be cleared at any time.
+History is stored in your browser using `localStorage` and can be cleared at any time. Up to **100 generated QR codes** and **100 scanned QR codes** are retained.
+
+Generated history entries can be loaded back into the generator with their saved QR type and appearance settings.
 
 ### Privacy
 
-QR Studio is designed to work entirely on the client side.
+QR Studio performs QR code generation and scanning in the browser and does not require an application backend.
 
-QR code generation and scanning happen directly in your browser. Generated content and scan history are not sent to a backend server.
+Generated and scanned history is stored locally in your browser using `localStorage`.
 
-For scanned links, the application only allows supported protocols such as:
+> **Important:** Generated QR content is also mirrored into the page URL as query parameters so the generator state can be restored. Sensitive values — for example Wi-Fi passwords or private text — may therefore appear in the address bar, browser history, copied/shared links, and potentially web-server access logs when such a URL is requested. Avoid sharing generated URLs that contain secrets.
+
+For scanned links, the application only allows supported protocols to be opened directly:
 
 * `https`
 * `http`
 * `mailto`
 * `tel`
 
+Always verify an unfamiliar QR code before opening its destination.
+
 ### Additional Features
 
 * Responsive design for desktop and mobile
 * Automatic light and dark mode
 * Hungarian and English interface
+* Language preference stored locally in the browser
 * Progressive Web App manifest
 * Keyboard-accessible controls
 * Camera scanning with HTTPS or localhost
+* Reduced-motion support for users who prefer less animation
 * No build process required
 * No backend required
 
