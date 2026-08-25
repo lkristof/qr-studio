@@ -1,7 +1,7 @@
 {
   "name": "QR Stúdió",
   "short_name": "QR Stúdió",
-  "id": "/qr-studio/",
+  "id": "/qr-studio",
   "start_url": "./",
   "scope": "./",
   "icons": [
