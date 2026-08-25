@@ -2242,7 +2242,7 @@
 
             <div class="security-note">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="M12 8v4M12 16h.01"></path></svg>
-              <span>Ismeretlen QR-kódnál ellenőrizd a webcímet megnyitás előtt. A beolvasási előzmények csak ezen a készüléken, a böngésző helyi tárhelyén maradnak meg. Az oldal csak a <strong>https</strong>, <strong>http</strong>, <strong>mailto</strong> és <strong>tel</strong> hivatkozásokat engedi megnyitni.</span>
+              <span>Ismeretlen QR-kódnál ellenőrizd a tartalmat megnyitás előtt. A beolvasási előzmények csak ezen a készüléken, a böngésző helyi tárhelyén maradnak meg. Az oldal webes, e-mail-, telefon- és SMS-hivatkozásokat, valamint vCard- és iCalendar-fájlokat tud megnyitni.</span>
             </div>
           </div>
         </aside>
@@ -2497,9 +2497,7 @@
         "Biztosan törlöd az összes generált QR-kódot? Ez a művelet nem vonható vissza.": "Are you sure you want to delete all generated QR codes? This action cannot be undone.",
         "A kiválasztott generált QR-kód törölve.": "The selected generated QR code was deleted.",
         "A generált QR-kód visszatöltve.": "The generated QR code was loaded.",
-        "Ismeretlen QR-kódnál ellenőrizd a webcímet megnyitás előtt. A beolvasási előzmények csak ezen a készüléken, a böngésző helyi tárhelyén maradnak meg. Az oldal csak a": "For unknown QR codes, verify the address before opening it. Scan history is stored only on this device in the browser's local storage. The page only allows",
-        "és": "and",
-        "hivatkozásokat engedi megnyitni.": "links to be opened.",
+        "Ismeretlen QR-kódnál ellenőrizd a tartalmat megnyitás előtt. A beolvasási előzmények csak ezen a készüléken, a böngésző helyi tárhelyén maradnak meg. Az oldal webes, e-mail-, telefon- és SMS-hivatkozásokat, valamint vCard- és iCalendar-fájlokat tud megnyitni.": "For unknown QR codes, verify the content before opening it. Scan history is stored only on this device in the browser's local storage. The page can open web, email, phone and SMS links, as well as vCard and iCalendar files.",
         "A generálás és a beolvasás a böngészőben történik. Kamerahasználathoz HTTPS-kapcsolat vagy localhost szükséges.": "Generation and scanning happen in the browser. Camera access requires HTTPS or localhost.",
         "A feldolgozás a böngészőben történik": "Processing happens in the browser",
         "Funkció választó": "Feature selector",
@@ -3746,10 +3744,10 @@
         if (/^https?:\/\//i.test(trimmed)) return { type: 'url', label: translate('webcím'), openable: true };
         if (/^mailto:/i.test(trimmed)) return { type: 'email', label: translate('e-mail'), openable: true };
         if (/^tel:/i.test(trimmed)) return { type: 'phone', label: translate('telefonszám'), openable: true };
-        if (/^(?:SMSTO:|sms:)/i.test(trimmed)) return { type: 'sms', label: translate('SMS-üzenet'), openable: false };
+        if (/^(?:SMSTO:|sms:)/i.test(trimmed)) return { type: 'sms', label: translate('SMS-üzenet'), openable: true };
         if (/^WIFI:/i.test(trimmed)) return { type: 'wifi', label: translate('Wi-Fi beállítás'), openable: false };
-        if (/^BEGIN:VCARD/i.test(trimmed)) return { type: 'vcard', label: translate('névjegy'), openable: false };
-        if (/^BEGIN:(?:VCALENDAR|VEVENT)/i.test(trimmed)) return { type: 'event', label: translate('esemény'), openable: false };
+        if (/^BEGIN:VCARD/i.test(trimmed)) return { type: 'vcard', label: translate('névjegy'), openable: true };
+        if (/^BEGIN:(?:VCALENDAR|VEVENT)/i.test(trimmed)) return { type: 'event', label: translate('esemény'), openable: true };
         return { type: 'text', label: translate('szöveg'), openable: false };
       }
 
@@ -3833,10 +3831,84 @@
         }
 
         const raw = trimmed.replace(/^sms:/i, '');
-        const questionMark = raw.indexOf('?');
-        const number = questionMark >= 0 ? raw.slice(0, questionMark) : raw;
-        const params = new URLSearchParams(questionMark >= 0 ? raw.slice(questionMark + 1) : '');
+        const queryIndex = raw.search(/[?&]/);
+        const number = queryIndex >= 0 ? raw.slice(0, queryIndex) : raw;
+        const params = new URLSearchParams(queryIndex >= 0 ? raw.slice(queryIndex + 1) : '');
         return { number, message: params.get('body') || '' };
+      }
+
+      function isIOSLikeDevice() {
+        return /iPad|iPhone|iPod/.test(navigator.userAgent)
+          || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      }
+
+      function buildSmsOpenUrl(value) {
+        const sms = parseSmsQrValue(value);
+        const number = sms.number.trim().replace(/\s+/g, '');
+        if (!number) return '';
+        if (!sms.message) return `sms:${number}`;
+
+        const separator = isIOSLikeDevice() ? '&' : '?';
+        return `sms:${number}${separator}body=${encodeURIComponent(sms.message)}`;
+      }
+
+      function openQrDataFile(value, mimeType, fileName) {
+        const normalizedValue = value.replace(/\r?\n/g, '\r\n');
+        const blob = new Blob([normalizedValue], { type: mimeType });
+        const objectUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = objectUrl;
+        link.download = fileName;
+        link.type = mimeType;
+        link.rel = 'noopener';
+        link.style.display = 'none';
+        document.body.append(link);
+        link.click();
+        link.remove();
+        window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60000);
+      }
+
+      function normalizeEventFileValue(value) {
+        const trimmed = value.trim();
+        if (/^BEGIN:VCALENDAR/i.test(trimmed)) return trimmed;
+        if (/^BEGIN:VEVENT/i.test(trimmed)) {
+          return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//QR Studio//Imported Event//HU', trimmed, 'END:VCALENDAR'].join('\r\n');
+        }
+        return trimmed;
+      }
+
+      function openQrResult(value) {
+        const target = value.trim();
+        const classification = classifyResult(target);
+
+        if (classification.type === 'url') {
+          window.open(target, '_blank', 'noopener,noreferrer');
+          return true;
+        }
+
+        if (classification.type === 'email' || classification.type === 'phone') {
+          window.location.href = target;
+          return true;
+        }
+
+        if (classification.type === 'sms') {
+          const smsUrl = buildSmsOpenUrl(target);
+          if (!smsUrl) return false;
+          window.location.href = smsUrl;
+          return true;
+        }
+
+        if (classification.type === 'vcard') {
+          openQrDataFile(target, 'text/vcard', currentLanguage === 'en' ? 'qr-contact.vcf' : 'qr-nevjegy.vcf');
+          return true;
+        }
+
+        if (classification.type === 'event') {
+          openQrDataFile(normalizeEventFileValue(target), 'text/calendar', currentLanguage === 'en' ? 'qr-event.ics' : 'qr-esemeny.ics');
+          return true;
+        }
+
+        return false;
       }
 
       function unescapeVcardValue(value) {
@@ -4323,8 +4395,7 @@
         }
 
         if (action === 'open') {
-          const target = value.trim();
-          if (/^(https?:\/\/|mailto:|tel:)/i.test(target)) window.open(target, '_blank', 'noopener,noreferrer');
+          openQrResult(value);
           return;
         }
 
@@ -4689,10 +4760,7 @@
         }
 
         if (action === 'open') {
-          const target = value.trim();
-          if (/^(https?:\/\/|mailto:|tel:)/i.test(target)) {
-            window.open(target, '_blank', 'noopener,noreferrer');
-          }
+          openQrResult(value);
           return;
         }
 
