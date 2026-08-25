@@ -8,7 +8,7 @@
   <meta name="description" content="Készíts testreszabható QR-kódokat, vagy olvasd be őket kamerával vagy képfájlból, közvetlenül a böngészőben.">
   <link rel="canonical" href="https://lkristof.github.io/qr-studio/" />
 
-  <meta name="theme-color" content="#111827">
+  <meta name="theme-color" content="#f3f5f9">
 
   <link rel="manifest" href="./site.webmanifest" />
   <meta name="apple-mobile-web-app-title" content="QR Stúdió" />
@@ -48,7 +48,7 @@
 
   <style>
     :root {
-      color-scheme: light dark;
+      color-scheme: light;
       --bg: #f3f5f9;
       --surface: rgba(255, 255, 255, 0.88);
       --surface-solid: #ffffff;
@@ -77,8 +77,36 @@
       --radius-sm: 13px;
     }
 
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #090d18;
+      --surface: rgba(17, 24, 39, 0.88);
+      --surface-solid: #111827;
+      --surface-soft: rgba(79, 70, 229, 0.15);
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --border: rgba(226, 232, 240, 0.12);
+      --primary: #818cf8;
+      --primary-strong: #6366f1;
+      --primary-soft: rgba(129, 140, 248, 0.16);
+      --success: #34d399;
+      --success-soft: rgba(52, 211, 153, 0.12);
+      --danger: #fca5a5;
+      --danger-soft: rgba(248, 113, 113, 0.13);
+      --shadow: 0 24px 64px rgba(0, 0, 0, 0.32);
+      --scanner-bg: #05070c;
+      --scanner-placeholder-bg: radial-gradient(circle at 50% 25%, rgba(99, 102, 241, 0.25), transparent 45%), #070b14;
+      --scanner-text: #dbeafe;
+      --scanner-muted: #94a3b8;
+      --scanner-frame: rgba(255, 255, 255, 0.16);
+      --scanner-corner: #818cf8;
+      --scanner-line: #a5b4fc;
+      --scanner-line-glow: rgba(165, 180, 252, 0.95);
+    }
+
     @media (prefers-color-scheme: dark) {
-      :root {
+      :root:not([data-theme]) {
+        color-scheme: dark;
         --bg: #090d18;
         --surface: rgba(17, 24, 39, 0.88);
         --surface-solid: #111827;
@@ -106,6 +134,12 @@
     }
 
     * { box-sizing: border-box; }
+
+    :root.theme-changing *,
+    :root.theme-changing *::before,
+    :root.theme-changing *::after {
+      transition: none !important;
+    }
 
     .lucide-icon {
       width: 1em;
@@ -205,7 +239,8 @@
     .brand-tagline { display: block; margin-top: 3px; color: var(--muted); font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     .privacy-chip,
-    .language-chip {
+    .language-chip,
+    .theme-toggle {
       display: inline-flex;
       align-items: center;
       gap: 7px;
@@ -222,6 +257,32 @@
     }
 
     .privacy-chip svg { width: 15px; height: 15px; color: var(--success); }
+
+    .theme-toggle {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      justify-content: center;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: border-color .16s ease, background .16s ease, color .16s ease, transform .16s ease;
+    }
+
+    .theme-toggle:hover {
+      border-color: color-mix(in srgb, var(--primary) 42%, var(--border));
+      background: color-mix(in srgb, var(--surface-solid) 92%, transparent);
+    }
+
+    .theme-toggle:active { transform: scale(.96); }
+    .theme-toggle svg { width: 17px; height: 17px; color: var(--primary); }
+    .theme-icon-sun { display: none; }
+    :root[data-theme="dark"] .theme-icon-moon { display: none; }
+    :root[data-theme="dark"] .theme-icon-sun { display: block; }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) .theme-icon-moon { display: none; }
+      :root:not([data-theme]) .theme-icon-sun { display: block; }
+    }
 
     .topbar-actions {
       display: flex;
@@ -1561,6 +1622,7 @@
       .topbar { align-items: flex-start; }
       .privacy-chip span { display: none; }
       .privacy-chip { width: 40px; height: 40px; justify-content: center; padding: 0; }
+      .theme-toggle { width: 40px; height: 40px; }
       .topbar-actions { gap: 6px; }
       .language-chip { padding-inline: 10px; }
       .hero { margin-top: 8px; }
@@ -1656,6 +1718,11 @@
             <option value="en">EN</option>
           </select>
         </div>
+
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Váltás sötét témára" title="Váltás sötét témára">
+          <svg class="lucide-icon theme-icon-moon" data-lucide="moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"></path></svg>
+          <svg class="lucide-icon theme-icon-sun" data-lucide="sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg>
+        </button>
 
         <div class="privacy-chip" title="A feldolgozás a böngészőben történik">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -2239,6 +2306,8 @@
       const scanHistoryEmpty = $('#scan-history-empty');
       const languageSelect = $('#language-select');
       const languageCurrent = $('#language-current');
+      const themeToggle = $('#theme-toggle');
+      const themeColorMeta = document.querySelector('meta[name="theme-color"]');
       const deleteHistoryModal = $('#delete-history-modal');
       const deleteHistoryDialog = deleteHistoryModal.querySelector('.confirm-dialog');
       const cancelDeleteHistoryButton = $('#cancel-delete-history');
@@ -2274,6 +2343,7 @@
       const MAX_STORED_SCANS = 100;
       const MAX_STORED_GENERATED_QRS = 100;
       const LANGUAGE_STORAGE_KEY = 'qr-studio.language.v1';
+      const THEME_STORAGE_KEY = 'qr-studio.theme.v1';
       const GENERATOR_URL_PARAM_KEYS = ['qr', 'type', 'size', 'level', 'dark', 'light', 'name'];
 
       const englishTranslations = {
@@ -2474,12 +2544,15 @@
         "Az SVG-fájl letöltése elindult.": "The SVG download has started.",
         "SMS-üzenet": "SMS message",
         "névjegy": "contact",
-        "Készíts testreszabható QR-kódokat, vagy olvasd be őket kamerával vagy képfájlból, közvetlenül a böngészőben.": "Create customizable QR codes, or scan them using your camera or an image file, directly in your browser."
+        "Készíts testreszabható QR-kódokat, vagy olvasd be őket kamerával vagy képfájlból, közvetlenül a böngészőben.": "Create customizable QR codes, or scan them using your camera or an image file, directly in your browser.",
+        "Váltás sötét témára": "Switch to dark theme",
+        "Váltás világos témára": "Switch to light theme"
 };
       const staticTextBindings = [];
       const staticAttributeBindings = [];
       let languageMode = resolveAutomaticLanguage();
       let currentLanguage = languageMode;
+      const systemThemeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
       let fileNameTouched = false;
 
       function getDefaultFileName() {
@@ -2490,6 +2563,58 @@
         // Nincs külön „Automatikus” opció: első indításkor a böngésző nyelve dönt.
         const browserLanguage = (navigator.languages && navigator.languages[0]) || navigator.language || 'en';
         return browserLanguage.toLowerCase().startsWith('hu') ? 'hu' : 'en';
+      }
+
+      function getStoredTheme() {
+        try {
+          const value = localStorage.getItem(THEME_STORAGE_KEY);
+          return value === 'light' || value === 'dark' ? value : null;
+        } catch (_) {
+          return null;
+        }
+      }
+
+      function resolvePreferredTheme() {
+        return getStoredTheme() || (systemThemeMediaQuery.matches ? 'dark' : 'light');
+      }
+
+      function refreshThemeToggle(theme = document.documentElement.dataset.theme || resolvePreferredTheme()) {
+        const switchLabel = theme === 'dark' ? 'Váltás világos témára' : 'Váltás sötét témára';
+        const translatedLabel = translate(switchLabel);
+        themeToggle.setAttribute('aria-label', translatedLabel);
+        themeToggle.title = translatedLabel;
+        themeToggle.setAttribute('aria-pressed', String(theme === 'dark'));
+      }
+
+      function applyTheme(theme) {
+        const nextTheme = theme === 'dark' ? 'dark' : 'light';
+        const root = document.documentElement;
+
+        root.classList.add('theme-changing');
+        root.dataset.theme = nextTheme;
+        if (themeColorMeta) themeColorMeta.content = nextTheme === 'dark' ? '#090d18' : '#f3f5f9';
+        refreshThemeToggle(nextTheme);
+
+        void root.offsetWidth;
+        requestAnimationFrame(() => {
+          root.classList.remove('theme-changing');
+        });
+      }
+
+      function storeTheme(theme) {
+        try {
+          localStorage.setItem(THEME_STORAGE_KEY, theme);
+        } catch (_) {}
+      }
+
+      function handleSystemThemeChange() {
+        if (!getStoredTheme()) applyTheme(systemThemeMediaQuery.matches ? 'dark' : 'light');
+      }
+
+      if (typeof systemThemeMediaQuery.addEventListener === 'function') {
+        systemThemeMediaQuery.addEventListener('change', handleSystemThemeChange);
+      } else if (typeof systemThemeMediaQuery.addListener === 'function') {
+        systemThemeMediaQuery.addListener(handleSystemThemeChange);
       }
 
       function translate(value) {
@@ -2638,6 +2763,7 @@
         });
         refreshScanHistoryLanguage();
         refreshGeneratedHistoryLanguage();
+        refreshThemeToggle();
       }
 
       function setLanguageMode(mode, persist = true) {
@@ -2826,6 +2952,12 @@
       generatorTab.addEventListener('click', () => selectTab('generator'));
       scannerTab.addEventListener('click', () => selectTab('scanner'));
       languageSelect.addEventListener('change', () => setLanguageMode(languageSelect.value));
+      themeToggle.addEventListener('click', () => {
+        const currentTheme = document.documentElement.dataset.theme || resolvePreferredTheme();
+        const selectedTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        storeTheme(selectedTheme);
+        applyTheme(selectedTheme);
+      });
       fileName.addEventListener('input', () => { fileNameTouched = true; });
 
       const brandLogo = $('.brand-logo');
@@ -4395,6 +4527,7 @@
       syncColorPresetState();
       selectQrType('text', { generate: false });
       captureStaticTranslations();
+      applyTheme(resolvePreferredTheme());
       initializeLanguage();
       loadGeneratedHistory();
       loadScanHistory();
