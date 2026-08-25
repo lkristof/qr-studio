@@ -166,7 +166,7 @@
       min-width: 0;
     }
 
-    .brand-mark {
+    .brand-logo {
       display: block;
       width: 44px;
       height: 44px;
@@ -174,10 +174,35 @@
       filter: drop-shadow(0 10px 14px rgba(79, 70, 229, 0.30));
     }
 
-    .brand-mark img { display: block; width: 100%; height: 100%; object-fit: contain; }
-    .brand-copy { min-width: 0; }
-    .brand-copy strong { display: block; font-size: 1rem; line-height: 1.2; }
-    .brand-copy span { display: block; margin-top: 3px; color: var(--muted); font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .brand-logo img { display: block; width: 100%; height: 100%; object-fit: contain; }
+    .brand-text { min-width: 0; }
+    .brand-name {
+      display: flex;
+      align-items: baseline;
+      gap: 0.28em;
+      font-size: 1rem;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+    .brand-name .brand-name-qr,
+    .brand-name .brand-name-studio {
+      display: inline;
+      margin: 0;
+      font-size: inherit;
+      line-height: inherit;
+      overflow: visible;
+      text-overflow: clip;
+    }
+    .brand-name .brand-name-qr {
+      color: var(--primary-strong);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+    }
+    .brand-name .brand-name-studio {
+      color: var(--text);
+      font-weight: 800;
+    }
+    .brand-tagline { display: block; margin-top: 3px; color: var(--muted); font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     .privacy-chip,
     .language-chip {
@@ -804,7 +829,7 @@
     .btn:disabled { opacity: .48; cursor: not-allowed; }
     .btn svg { width: 19px; height: 19px; }
 
-    .brand-mark {
+    .brand-logo {
       transform-origin: center;
       will-change: transform;
     }
@@ -817,7 +842,7 @@
     }
 
     @media (hover: hover) and (pointer: fine) {
-      .brand-mark:hover {
+      .brand-logo:hover {
         animation: logo-pulse .58s ease-out;
       }
     }
@@ -1070,7 +1095,7 @@
     @media (prefers-reduced-motion: reduce) {
       .scanner-success, .scanner-success-mark { transition: none; animation: none !important; }
       .scanner-success-mark { transform: scale(1); }
-      .brand-mark,
+      .brand-logo,
       .logo-tap-animate,
       .confirm-modal-backdrop,
       .confirm-dialog,
@@ -1604,12 +1629,12 @@
   <main class="shell">
     <header class="topbar">
       <div class="brand">
-        <div class="brand-mark" aria-hidden="true">
+        <div class="brand-logo" aria-hidden="true">
           <img src="assets/images/favicon.svg" alt="">
         </div>
-        <div class="brand-copy">
-          <strong>QR Stúdió</strong>
-          <span>Generátor és beolvasó egy helyen</span>
+        <div class="brand-text">
+          <strong class="brand-name" aria-label="QR Stúdió"><span class="brand-name-qr">QR</span><span class="brand-name-studio">Stúdió</span></strong>
+          <span class="brand-tagline">Generátor és beolvasó egy helyen</span>
         </div>
       </div>
 
@@ -2259,6 +2284,7 @@
         "Titkos QR-kód": "Secret QR code",
         "QR Stúdió - Generálj és olvass be QR-kódokat": "QR Studio - Generate and scan QR codes",
         "QR Stúdió": "QR Studio",
+        "Stúdió": "Studio",
         "Generátor és beolvasó egy helyen": "Generator and scanner in one place",
         "Helyi feldolgozás": "Local processing",
         "Gyors · modern · mobilbarát": "Fast · modern · mobile-friendly",
@@ -2802,7 +2828,7 @@
       languageSelect.addEventListener('change', () => setLanguageMode(languageSelect.value));
       fileName.addEventListener('input', () => { fileNameTouched = true; });
 
-      const brandMark = $('.brand-mark');
+      const brandLogo = $('.brand-logo');
       const easterEggModal = $('#easter-egg-modal');
       const easterEggCard = easterEggModal.querySelector('.easter-egg-card');
       const easterEggQr = $('#easter-egg-qr');
@@ -2845,7 +2871,7 @@
         if (easterEggPreviousFocus instanceof HTMLElement) easterEggPreviousFocus.focus();
       }
 
-      brandMark.addEventListener('click', () => {
+      brandLogo.addEventListener('click', () => {
         easterEggClicks += 1;
         if (easterEggClicks < 5) return;
 
@@ -2865,18 +2891,18 @@
         }
       });
 
-      brandMark.addEventListener('pointerdown', (event) => {
+      brandLogo.addEventListener('pointerdown', (event) => {
         if (event.pointerType === 'mouse') return;
         if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-        brandMark.classList.remove('logo-tap-animate');
-        void brandMark.getBoundingClientRect();
-        brandMark.classList.add('logo-tap-animate');
+        brandLogo.classList.remove('logo-tap-animate');
+        void brandLogo.getBoundingClientRect();
+        brandLogo.classList.add('logo-tap-animate');
       }, { passive: true });
 
-      brandMark.addEventListener('animationend', (event) => {
+      brandLogo.addEventListener('animationend', (event) => {
         if (event.animationName === 'logo-pulse') {
-          brandMark.classList.remove('logo-tap-animate');
+          brandLogo.classList.remove('logo-tap-animate');
         }
       });
 
